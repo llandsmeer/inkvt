@@ -18,6 +18,8 @@
 #include <stdlib.h>
 
 #include "./input.hpp"
+#include "./program.hpp"
+//#include "./flush_inputstream.hpp"
 
 #define restrict __restrict__
 extern "C" {
@@ -47,34 +49,57 @@ static void setup_drivers() {
     system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
 }
 
+Program program;
+
 int main() {
 #ifdef TARGET_KOBO
     system("killall nickel");
     setup_drivers();
 #endif
     setup();
+    Buffers buffers;
+    program.setup();
     inputs.setup();
+    inputs.add_progout(program.fd_out);
     if (fbfd == -1) {
         printf("couldnt open fbink device\n");
     }
     fbink_print(fbfd, "HELLO WORLD", &config);
     config.row = 5;
     for (;;) {
-        inputs.wait();
-        while (inputs.keymap.messages.size() > 0) {
-            int c = inputs.keymap.messages.front();
-            inputs.keymap.messages.pop_front();
-            if (fbfd != -1) {
+        //flush_inputstream(STDIN_FILENO);
+        inputs.wait(buffers);
+        while (buffers.keyboard_in.size() > 0) {
+            int c = buffers.keyboard_in.front();
+            buffers.keyboard_in.pop_front();
+            program.write_char(c);
+            buffers.vt100_in.push_back(c);
+        }
+        while (buffers.prog_stdout.size() > 0) {
+            int c = buffers.prog_stdout.front();
+            buffers.prog_stdout.pop_front();
+            buffers.vt100_in.push_back(c);
+            if (c == 'q') break;
+        }
+        while (buffers.vt100_in.size() > 0) {
+            int c = buffers.vt100_in.front();
+            buffers.vt100_in.pop_front();
+            if (fbfd == -1) {
+                printf("%c\n", c);
+            } else if (c == '\n') {
+                config.col = 0;
+                config.row += 1;
+            } else {
                 fbink_printf(fbfd, 0, &config, "%c", c);
                 config.col += 1;
-                if (config.col >= 80) {
+                if (config.col >= state.max_cols) {
                     config.row += 1;
                     config.col = 0;
                 }
-            } else {
-                printf("%c\n", c);
             }
-            if (c == 'q') break;
         }
     }
+    program.kill();
 }
+
+

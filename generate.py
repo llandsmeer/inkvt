@@ -1,7 +1,7 @@
 import string
 # remember: only on linux, not kobo!
 
-digits = '0123456789'
+digits = '1234567890'
 upperd = '!@#$%^&*()'
 
 class Key:

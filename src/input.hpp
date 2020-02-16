@@ -32,6 +32,7 @@
 #include <errno.h>
 
 #include "./keymap.hpp"
+#include "./buffers.hpp"
 
 static int _is_event_device(const struct dirent *dir) {
     return strncmp("event", dir->d_name, 5) == 0;
@@ -43,6 +44,7 @@ public:
 private:
     const int FD_EVDEV = 1;
     const int FD_SERIAL = 2;
+    const int FD_PROGOUT = 3;
     int fdtype[64];
     struct pollfd fds[64];
     int nfds = 0;
@@ -84,7 +86,7 @@ private:
         }
     }
 
-    void handle_evdev(int fd) {
+    void handle_evdev(Buffers & buffers, int fd) {
         struct input_event ev;
         unsigned int size = read(fd, &ev, sizeof(struct input_event));
         int handled = 1;
@@ -105,7 +107,7 @@ private:
         } else if(ev.type == EV_KEY) {
             // cat /usr/include/linux/input-event-codes.h | grep KEY_
             if (ev.value == 1 || ev.value == 2) {
-                keymap.press(ev.code);
+                keymap.press(buffers.keyboard_in, ev.code);
                 handled = 1;
             } else if(ev.value == 0) {
                 keymap.release(ev.code);
@@ -117,7 +119,7 @@ private:
         }
     }
 
-    void handle_serial(int fd) {
+    void handle_serial(Buffers & buffers, int fd) {
         char buf[512];
         for (;;) {
             int nread = read(fd, buf, sizeof(buf));
@@ -126,24 +128,39 @@ private:
                 break;
             }
             for (int n = 0; n < nread; n++) {
-                keymap.messages.push_back(buf[n]);
+                buffers.keyboard_in.push_back(buf[n]);
             }
+        }
+    }
+
+    void handle_progout(Buffers & buffers, int fd) {
+        char c;
+        while (read(fd, &c, 1) == 1) {
+            buffers.prog_stdout.push_back(c);
         }
     }
 public:
     void setup() {
         _setup();
     }
-    void wait() {
+    void wait(Buffers & buffers) {
         ppoll(fds, nfds, 0, 0);
         for (int i = 0; i < nfds; i++) {
             if (!fds[i].revents) continue;
             if (fdtype[i] == FD_EVDEV) {
-                handle_evdev(fds[i].fd);
+                handle_evdev(buffers, fds[i].fd);
             }
             if (fdtype[i] == FD_SERIAL) {
-                handle_serial(fds[i].fd);
+                handle_serial(buffers, fds[i].fd);
+            }
+            if (fdtype[i] == FD_PROGOUT) {
+                handle_progout(buffers, fds[i].fd);
             }
         }
+    }
+    void add_progout(int fd) {
+        fdtype[nfds] = FD_PROGOUT;
+        fds[nfds].events = POLLIN;
+        fds[nfds++].fd = fd;
     }
 };

@@ -22,17 +22,16 @@
 #include <stdio.h>
 
 struct Keymap {
-    std::deque<int> messages;
     int shift = 0;
     int ctrl = 0;
 
-    void press(int keycode) {
+    void press(std::deque<int> & keyboard_in, int keycode) {
         if (keycode == KEY_LEFTSHIFT || keycode == KEY_RIGHTSHIFT) {
             shift = 1;
         }
         int c = translate(keycode);
         if (c != 0) {
-            messages.push_back(c);
+            keyboard_in.push_back(c);
         }
     }
 
