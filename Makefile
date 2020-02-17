@@ -1,26 +1,26 @@
 CROSS_TC=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
-CPPFLAGS=-Wall
+CPPFLAGS=-Wall -Ilibvterm-0.1.3/include
 LDFLAGS=-lm -Lbuild -lutil
 
-all: tracee_exec linux kobo
-.PHONY: tracee_exec linux kobo clean all
+all: tracexec linux kobo
+.PHONY: tracexec linux kobo clean all
 
-tracee_exec:
+tracexec:
 	mkdir -p build
 	gcc src/tracexec.c -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tracexec.x86
 	$(CROSS_TC)-gcc src/tracexec.c -Wall -falign-labels=8 -Wno-unused-value -o build/tracexec.x
 
-linux: build/libfbink.a
-	g++ src/main.cpp -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
+linux: build/libfbink.a build/libvterm.a
+	g++ src/main.cpp -lvterm -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
 
-kobo: build/libfbink_kobo.a
-	$(CROSS_TC)-g++ -DTARGET_KOBO src/main.cpp -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
+kobo: build/libfbink_kobo.a build/libvterm_kobo.a
+	$(CROSS_TC)-g++ -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
 
 build/libvterm.a:
-	make CROSS_TC=$(CROSS_TC) -f Makevterm
+	make -f Makevterm
 
-build/libvterm_kobo.la:
-	make CROSS_TC=$(CROSS_TC) OUT=libvterm_kobo.la -f Makevterm
+build/libvterm_kobo.a:
+	make CROSS_TC=$(CROSS_TC) OUT=libvterm_kobo.a -f Makevterm
 
 build/libfbink.a:
 	mkdir -p build
@@ -36,5 +36,5 @@ build/libfbink_kobo.a:
 
 clean:
 	make -C FBInk clean
-	rm -fr build/
 	make -f Makevterm clean
+	rm -fr build/

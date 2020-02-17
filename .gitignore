@@ -1,4 +1,4 @@
 .mypy_cache/
 __pycache__/
-build/
-src/flush_inputstream.hpp
+/build/
+/libvterm-0.1.3/src/*.o
