@@ -28,9 +28,22 @@ struct Keymap {
     void press(std::deque<int> & keyboard_in, int keycode) {
         if (keycode == KEY_LEFTSHIFT || keycode == KEY_RIGHTSHIFT) {
             shift = 1;
+            return;
+        }
+        if (keycode == KEY_LEFTCTRL || keycode == KEY_RIGHTCTRL || keycode == KEY_CAPSLOCK) {
+            ctrl = 1;
+            return;
+        }
+        if (keycode == KEY_BACKSPACE) {
+            keyboard_in.push_back(0x7f);
+            return;
         }
         int c = translate(keycode);
         if (c != 0) {
+            if (ctrl) {
+                if (c > 0x60) c -= 0x20;
+                c -= 0x40;
+            }
             keyboard_in.push_back(c);
         }
     }
@@ -38,6 +51,10 @@ struct Keymap {
     void release(int keycode) {
         if (keycode == KEY_LEFTSHIFT || keycode == KEY_RIGHTSHIFT) {
             shift = 0;
+        }
+        if (keycode == KEY_LEFTCTRL || keycode == KEY_RIGHTCTRL || keycode == KEY_CAPSLOCK) {
+            ctrl = 0;
+            return;
         }
     }
 
@@ -75,8 +92,6 @@ struct Keymap {
             case KEY_SLASH:
                   if (shift) return '?';
                   else return '/';
-            case KEY_LEFTSHIFT:
-                  return '?';
             case KEY_BACKSPACE:
                   return 128;
             case KEY_ENTER:
