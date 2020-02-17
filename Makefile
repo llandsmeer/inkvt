@@ -16,6 +16,12 @@ linux: build/libfbink.a
 kobo: build/libfbink_kobo.a
 	$(CROSS_TC)-g++ -DTARGET_KOBO src/main.cpp -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
 
+build/libvterm.a:
+	make CROSS_TC=$(CROSS_TC) -f Makevterm
+
+build/libvterm_kobo.la:
+	make CROSS_TC=$(CROSS_TC) OUT=libvterm_kobo.la -f Makevterm
+
 build/libfbink.a:
 	mkdir -p build
 	make -C FBInk clean
@@ -31,3 +37,4 @@ build/libfbink_kobo.a:
 clean:
 	make -C FBInk clean
 	rm -fr build/
+	make -f Makevterm clean

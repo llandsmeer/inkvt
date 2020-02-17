@@ -1,0 +1,35 @@
+# vim: filetype=make
+
+ifdef CROSS_TC
+	CC:=$(CROSS_TC)-gcc
+	CXX:=$(CROSS_TC)-g++
+	STRIP:=$(CROSS_TC)-strip
+	AR:=$(CROSS_TC)-gcc-ar
+	RANLIB:=$(CROSS_TC)-gcc-ranlib
+endif
+
+ifndef OUT
+	OUT=libvterm.a
+endif
+
+ifndef RANLIB
+	RANLIB=ranlib
+endif
+
+LIBVTERM=libvterm-0.1.3
+TBLFILES=$(wildcard $(LIBVTERM)/src/encoding/*.tbl)
+INCFILES=$(TBLFILES:.tbl=.inc)
+VTERMCFILES=$(wildcard $(LIBVTERM)/src/*.c)
+VTERMOFILES=$(VTERMCFILES:.c=.o)
+CFLAGS=-std=c99 -c -Wall -I$(LIBVTERM)/include
+
+all: $(VTERMOFILES)
+	mkdir -p build
+	$(AR) rc build/$(OUT) $(VTERMOFILES)
+	$(RANLIB) build/$(OUT)
+
+$(LIBVTERM)/src/%.o: $(LIBVTERM)/src/%.c
+	$(CC) $(CFLAGS) $? -o $@
+
+clean:
+	rm -f $(VTERMOFILES) build/$(OUT)
