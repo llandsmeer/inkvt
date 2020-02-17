@@ -18,8 +18,7 @@
 #include <stdlib.h>
 
 #include "./input.hpp"
-#include "./program.hpp"
-//#include "./flush_inputstream.hpp"
+#include "./pseudotty.hpp"
 
 #define restrict __restrict__
 extern "C" {
@@ -41,40 +40,36 @@ static void setup() {
     fbink_get_state(&config, &state);
 }
 
-#ifdef TARGET_KOBO
 static void setup_drivers() {
+#ifdef TARGET_KOBO
     system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/libcomposite.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/usb_f_acm.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/u_serial.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
-}
 #endif
+}
 
-Program program;
+PseudoTTY pty;
 
 int main() {
-#ifdef TARGET_KOBO
     setup_drivers();
-#endif
     setup();
     Buffers buffers;
-    program.setup();
+    pty.setup();
     inputs.setup();
-    inputs.add_progout(program.fd_out);
+    inputs.add_progout(pty.master);
     if (fbfd == -1) {
         printf("couldnt open fbink device\n");
     }
     fbink_print(fbfd, "HELLO WORLD", &config);
     config.row = 5;
     for (;;) {
-        //flush_inputstream(STDIN_FILENO);
         inputs.wait(buffers);
         while (buffers.keyboard_in.size() > 0) {
             int c = buffers.keyboard_in.front();
             buffers.keyboard_in.pop_front();
-            program.write_char(c);
-            buffers.vt100_in.push_back(c);
+            pty.write(c);
         }
         while (buffers.prog_stdout.size() > 0) {
             int c = buffers.prog_stdout.front();
@@ -100,7 +95,6 @@ int main() {
             }
         }
     }
-    program.kill();
 }
 
 

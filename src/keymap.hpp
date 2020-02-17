@@ -75,39 +75,41 @@ struct Keymap {
             case KEY_SLASH:
                   if (shift) return '?';
                   else return '/';
+            case KEY_LEFTSHIFT:
+                  return '?';
             case KEY_BACKSPACE:
                   return 128;
             case KEY_ENTER:
                   return '\n';
             case KEY_1:
-                  if (shift) return '@';
+                  if (shift) return '!';
                   else return '1';
             case KEY_2:
-                  if (shift) return '#';
+                  if (shift) return '@';
                   else return '2';
             case KEY_3:
-                  if (shift) return '$';
+                  if (shift) return '#';
                   else return '3';
             case KEY_4:
-                  if (shift) return '%';
+                  if (shift) return '$';
                   else return '4';
             case KEY_5:
-                  if (shift) return '^';
+                  if (shift) return '%';
                   else return '5';
             case KEY_6:
-                  if (shift) return '&';
+                  if (shift) return '^';
                   else return '6';
             case KEY_7:
-                  if (shift) return '*';
+                  if (shift) return '&';
                   else return '7';
             case KEY_8:
-                  if (shift) return '(';
+                  if (shift) return '*';
                   else return '8';
             case KEY_9:
-                  if (shift) return ')';
+                  if (shift) return '(';
                   else return '9';
             case KEY_0:
-                  if (shift) return '!';
+                  if (shift) return ')';
                   else return '0';
             case KEY_Q:
                   if (shift) return 'Q';
@@ -187,7 +189,7 @@ struct Keymap {
             case KEY_M:
                   if (shift) return 'M';
                   else return 'm';
-        }
+              }
         return 0;
     }
 };

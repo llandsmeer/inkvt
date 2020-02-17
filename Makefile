@@ -1,6 +1,6 @@
 CROSS_TC=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 CPPFLAGS=-Wall
-LDFLAGS=-lm -Lbuild
+LDFLAGS=-lm -Lbuild -lutil
 
 all: tracee_exec linux kobo
 .PHONY: tracee_exec linux kobo clean all
