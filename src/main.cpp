@@ -41,6 +41,7 @@ static void setup() {
     fbink_get_state(&config, &state);
 }
 
+#ifdef TARGET_KOBO
 static void setup_drivers() {
     system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/libcomposite.ko");
@@ -48,12 +49,12 @@ static void setup_drivers() {
     system("insmod /drivers/mx6sll-ntx/usb/gadget/u_serial.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
 }
+#endif
 
 Program program;
 
 int main() {
 #ifdef TARGET_KOBO
-    system("killall nickel");
     setup_drivers();
 #endif
     setup();

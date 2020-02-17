@@ -59,7 +59,7 @@ private:
         struct dirent **namelist;
         int ndev = scandir("/dev/input", &namelist, &_is_event_device, alphasort);
         for (int i = 0; i < ndev; i++) {
-            char fname[255];
+            char fname[512];
             snprintf(fname, sizeof(fname), "/dev/input/%s", namelist[i]->d_name);
             int fd = open(fname, O_RDONLY, O_NONBLOCK);
             if (fd == -1) {

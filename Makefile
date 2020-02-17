@@ -2,6 +2,14 @@ CROSS_TC=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabih
 CPPFLAGS=-Wall
 LDFLAGS=-lm -Lbuild
 
+all: tracee_exec linux kobo
+.PHONY: tracee_exec linux kobo clean all
+
+tracee_exec:
+	mkdir -p build
+	gcc src/tracexec.c -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tracexec.x86
+	$(CROSS_TC)-gcc src/tracexec.c -Wall -falign-labels=8 -Wno-unused-value -o build/tracexec.x
+
 linux: build/libfbink.a
 	g++ src/main.cpp -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
 
@@ -19,9 +27,6 @@ build/libfbink_kobo.a:
 	make -C FBInk clean
 	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true static
 	cp FBInk/Release/libfbink.a build/libfbink_kobo.a
-
-# pushd Kobo && zip -r ../Release/FBInk-v1.21.0-31-gfdd7300.zip . && popd
-# /bin/sh: 1: pushd: not found
 
 clean:
 	make -C FBInk clean
