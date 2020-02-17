@@ -1,4 +1,38 @@
-// gcc ./tracee_exec.c -Wall -masm=intel -falign-labels=8 -g
+/* tracexec.c - Execute instruction in tracee
+ *
+ * Copyright (C) 2020 Lennart Landsmeer <lennart@landsmeer.email>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* gcc ./tracee_exec.c -Wall -masm=intel -falign-labels=8 -g
+
+usage:  build/tracexec.x86 PID CMD fds [CMD2 fds2...]
+
+cmds:
+        flush     make fd temporary nonblocking
+                  and perform reads of 24 bytes
+                  until read() returns with an error
+                  (most likely EAGAIN)
+        grab      ioctl(fd, EVIOCGRAB, 1)
+        ungrab    ioctl(fd, EVIOCGRAB, 0)
+
+example:
+        build/tracexec.x86 1234 flush 0 3 ungrab 3
+        will flush stdin and fd 3 for pid 1234
+        as well as releasing the evdev grab on fd 3
+*/
 
 #include <assert.h>
 #include <errno.h>
