@@ -19,26 +19,11 @@
 
 #include "./input.hpp"
 #include "./pseudotty.hpp"
-
-#define restrict __restrict__
-extern "C" {
-#include "./fbink.h"
-}
+#include "./vterm.hpp"
 
 Inputs inputs;
-
-int fbfd;
-FBInkConfig config = { 0 };
-FBInkState state = { 0 };
-
-static void setup() {
-    fbfd = fbink_open();
-    if (fbfd == -1) return;
-    fbink_init(fbfd, &config);
-    fbink_cls(fbfd, &config, 0);
-    fbink_state_dump(&config);
-    fbink_get_state(&config, &state);
-}
+PseudoTTY pty;
+VTermToFBInk vterm;
 
 static void setup_drivers() {
 #ifdef TARGET_KOBO
@@ -50,20 +35,13 @@ static void setup_drivers() {
 #endif
 }
 
-PseudoTTY pty;
-
 int main() {
     setup_drivers();
-    setup();
     Buffers buffers;
     pty.setup();
+    vterm.setup();
     inputs.setup();
     inputs.add_progout(pty.master);
-    if (fbfd == -1) {
-        printf("couldnt open fbink device\n");
-    }
-    fbink_print(fbfd, "HELLO WORLD", &config);
-    config.row = 5;
     for (;;) {
         inputs.wait(buffers);
         while (buffers.keyboard_in.size() > 0) {
@@ -80,19 +58,7 @@ int main() {
         while (buffers.vt100_in.size() > 0) {
             int c = buffers.vt100_in.front();
             buffers.vt100_in.pop_front();
-            if (fbfd == -1) {
-                printf("%c\n", c);
-            } else if (c == '\n') {
-                config.col = 0;
-                config.row += 1;
-            } else {
-                fbink_printf(fbfd, 0, &config, "%c", c);
-                config.col += 1;
-                if (config.col >= state.max_cols) {
-                    config.row += 1;
-                    config.col = 0;
-                }
-            }
+            vterm.write(c);
         }
     }
 }

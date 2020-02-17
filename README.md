@@ -8,3 +8,5 @@ Uses FBInk
 
 
 /lib/modules/5.3.0-28-generic/kernel/drivers/usb/gadget/legacy
+
+https://github.com/pkovac/x86term
