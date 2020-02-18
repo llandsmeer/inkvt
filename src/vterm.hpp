@@ -31,7 +31,7 @@ public:
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
         VTermPos pos;
-        uint8_t fg, bg, color;
+        uint8_t fg, bg;
         int row, col;
         for (row = rect.start_row; row < rect.end_row; row++) {
             for (col = rect.start_col; col < rect.end_col; col++) {

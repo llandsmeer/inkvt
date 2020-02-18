@@ -12,6 +12,8 @@
 #include <sys/select.h>
 #include <sys/wait.h>
 
+extern char **environ;
+
 class PseudoTTY {
 public:
     pid_t pid;
@@ -31,8 +33,9 @@ public:
         if (pid < 0) {
             exit(EXIT_FAILURE);
         } else if (pid == 0) {
-            char * args[] = { 0 };
-            execvp("/bin/sh", args);
+            char shell[] = "/bin/sh";
+            char * const args[] = { shell, 0 };
+            execve(shell, args, environ);
         } else {
             tcgetattr(master, &tios);
             // tios.c_lflag &= ~(ECHO | ECHONL);

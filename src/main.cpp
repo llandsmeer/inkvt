@@ -21,6 +21,10 @@
 #include "./pseudotty.hpp"
 #include "./vterm.hpp"
 
+#ifndef GITHASH
+#define GITHASH "<unknown>"
+#endif
+
 Inputs inputs;
 PseudoTTY pty;
 VTermToFBInk vterm;
@@ -29,8 +33,8 @@ static void setup_drivers() {
 #ifdef TARGET_KOBO
     system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/libcomposite.ko");
-    system("insmod /drivers/mx6sll-ntx/usb/gadget/usb_f_acm.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/u_serial.ko");
+    system("insmod /drivers/mx6sll-ntx/usb/gadget/usb_f_acm.ko");
     system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
 #endif
 }
@@ -42,6 +46,10 @@ int main() {
     vterm.setup();
     inputs.setup();
     inputs.add_progout(pty.master);
+    const char header[] = "inkvt\nversion " GITHASH "\n\n";
+    for (int i = 0; i < sizeof(header); i++) {
+        buffers.vt100_in.push_back(header[i]);
+    }
     for (;;) {
         inputs.wait(buffers);
         while (buffers.keyboard_in.size() > 0) {

@@ -123,8 +123,7 @@ private:
         char buf[512];
         for (;;) {
             int nread = read(fd, buf, sizeof(buf));
-            if (nread == -1) {
-                // errno = EAGAIN for blocking read
+            if (nread == -1) { // errno = EAGAIN for blocking read
                 break;
             }
             for (int n = 0; n < nread; n++) {
