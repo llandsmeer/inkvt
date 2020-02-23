@@ -31,7 +31,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "./keymap.hpp"
 #include "./buffers.hpp"
 
 static int _is_event_device(const struct dirent *dir) {
@@ -39,8 +38,6 @@ static int _is_event_device(const struct dirent *dir) {
 }
 
 class Inputs {
-public:
-    Keymap keymap;
 private:
     const int FD_EVDEV = 1;
     const int FD_SERIAL = 2;
@@ -105,12 +102,11 @@ private:
                 handled = 1;
             }
         } else if(ev.type == EV_KEY) {
-            // cat /usr/include/linux/input-event-codes.h | grep KEY_
             if (ev.value == 1 || ev.value == 2) {
-                keymap.press(buffers.keyboard_in, ev.code);
+                buffers.scancodes.push_back(ev.code | 0x100);
                 handled = 1;
             } else if(ev.value == 0) {
-                keymap.release(ev.code);
+                buffers.scancodes.push_back(ev.code | 0);
                 handled = 1;
             }
         }
@@ -127,7 +123,7 @@ private:
                 break;
             }
             for (int n = 0; n < nread; n++) {
-                buffers.keyboard_in.push_back(buf[n]);
+                buffers.scancodes.push_back(buf[n] | 0x100);
             }
         }
     }

@@ -8,18 +8,17 @@ LDFLAGS=-lm -Lbuild -lutil
 all: tracexec linux kobo
 .PHONY: tracexec linux kobo clean all
 
-linux: build/vterm.x86
-kobo: build/vterm.xarm
-
 build/tracexec.x:
 	mkdir -p build
 	gcc src/tracexec.c -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tracexec.x86
 	$(CROSS_TC)-gcc src/tracexec.c -Wall -falign-labels=8 -Wno-unused-value -o build/tracexec.x
 
-build/vterm.x86: build/libfbink.a build/libvterm.a
+linux: build/libfbink.a build/libvterm.a
+	python3 keymap.py > src/_keymap.hpp
 	g++ src/main.cpp -lvterm -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
 
-build/vterm.xarm: build/libfbink_kobo.a build/libvterm_kobo.a
+kobo: build/libfbink_kobo.a build/libvterm_kobo.a
+	python3 keymap.py > src/_keymap.hpp
 	$(CROSS_TC)-g++ -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
 
 build/libvterm.a:

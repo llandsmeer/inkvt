@@ -4,6 +4,7 @@
 
 struct Buffers {
     std::deque<int> prog_stdout;
-    std::deque<int> keyboard_in;
+    std::deque<int> scancodes;
+    std::deque<char> keyboard;
     std::deque<int> vt100_in;
 };

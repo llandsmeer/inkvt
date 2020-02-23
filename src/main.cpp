@@ -20,6 +20,7 @@
 #include "./input.hpp"
 #include "./pseudotty.hpp"
 #include "./vterm.hpp"
+#include "./_keymap.hpp"
 
 #ifndef GITHASH
 #define GITHASH "<unknown>"
@@ -28,6 +29,7 @@
 Inputs inputs;
 PseudoTTY pty;
 VTermToFBInk vterm;
+KeycodeTranslation keytrans;
 
 static void setup_drivers() {
 #ifdef TARGET_KOBO
@@ -46,27 +48,41 @@ int main() {
     vterm.setup();
     inputs.setup();
     inputs.add_progout(pty.master);
-    const char header[] = "inkvt\nversion " GITHASH "\n\n";
-    for (int i = 0; i < sizeof(header); i++) {
+    const char header[] = "inkvt\nversion " GITHASH "\n\n\n";
+    for (unsigned i = 0; i < sizeof(header); i++) {
         buffers.vt100_in.push_back(header[i]);
     }
     for (;;) {
         inputs.wait(buffers);
-        while (buffers.keyboard_in.size() > 0) {
-            int c = buffers.keyboard_in.front();
-            buffers.keyboard_in.pop_front();
+        while (buffers.scancodes.size() > 0) {
+            int c = buffers.scancodes.front();
+            buffers.scancodes.pop_front();
+            if (c >> 8) {
+                // key press
+                keytrans.press(c & 0xff, buffers.keyboard);
+            } else {
+                // key release
+                keytrans.release(c & 0xff, buffers.keyboard);
+            }
+        }
+        while (buffers.keyboard.size() > 0) {
+            int c = buffers.keyboard.front();
+            buffers.keyboard.pop_front();
+            if (keytrans.is_ctrl()) {
+                c = c & 31;
+            }
             pty.write(c);
+        }
+        while (buffers.vt100_in.size() > 0) {
+            int c = buffers.vt100_in.front();
+            buffers.vt100_in.pop_front();
+            vterm.write(c);
         }
         while (buffers.prog_stdout.size() > 0) {
             int c = buffers.prog_stdout.front();
             buffers.prog_stdout.pop_front();
             buffers.vt100_in.push_back(c);
             if (c == 'q') break;
-        }
-        while (buffers.vt100_in.size() > 0) {
-            int c = buffers.vt100_in.front();
-            buffers.vt100_in.pop_front();
-            vterm.write(c);
         }
     }
 }
