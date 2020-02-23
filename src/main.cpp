@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 
+#include "./netev.hpp"
 #include "./input.hpp"
 #include "./pseudotty.hpp"
 #include "./vterm.hpp"
@@ -48,12 +49,29 @@ int main() {
     vterm.setup();
     inputs.setup();
     inputs.add_progout(pty.master);
-    const char header[] = "inkvt\nversion " GITHASH "\n\n\n";
+    const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n\r\n";
     for (unsigned i = 0; i < sizeof(header); i++) {
         buffers.vt100_in.push_back(header[i]);
     }
     for (;;) {
         inputs.wait(buffers);
+        while (buffers.serial.size() >= netev_size) {
+            struct input_event ev;
+            if (netev_read(buffers.serial.data(), ev)) {
+                // remove inital netev_size items
+                std::vector<char>(buffers.serial.begin()+netev_size, buffers.serial.end()).swap(buffers.serial);
+                if(ev.type == EV_KEY) {
+                    if (ev.value == 1 || ev.value == 2) {
+                        buffers.scancodes.push_back(ev.code | 0x100);
+                    } else if(ev.value == 0) {
+                        buffers.scancodes.push_back(ev.code | 0);
+                    }
+                }
+            } else {
+                // magic check failed, discard some data and try again
+                buffers.serial.erase(buffers.serial.begin());
+            }
+        }
         while (buffers.scancodes.size() > 0) {
             int c = buffers.scancodes.front();
             buffers.scancodes.pop_front();

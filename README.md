@@ -11,7 +11,9 @@ but it (OTG) is supported by the hardware. For now I use my laptop as host,
 which sends keystrokes over serial to the Kobo device via the `g_serial`
 loadable kernel module that comes with the device.
 
-`screen /dev/ttyS0 -s 9600`
+```
+make
+```
 
 `inkvt` is mostly a wrapper around two really nice libraries:
 
@@ -28,6 +30,7 @@ Todo:
    to send control codes?
  - Connect an actual hardware keyboard
  - Make it runnable from KFMon
+
 # Tracexec
 
 After [some discussion](https://github.com/NiLuJe/FBInk/issues/45), I decided to

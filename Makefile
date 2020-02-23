@@ -16,6 +16,7 @@ build/tracexec.x:
 linux: build/libfbink.a build/libvterm.a
 	python3 keymap.py > src/_keymap.hpp
 	g++ src/main.cpp -lvterm -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
+	g++ src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS) $(CPPFLAGS)
 
 kobo: build/libfbink_kobo.a build/libvterm_kobo.a
 	python3 keymap.py > src/_keymap.hpp

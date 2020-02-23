@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "./setup_serial.hpp"
 #include "./buffers.hpp"
 
 static int _is_event_device(const struct dirent *dir) {
@@ -75,6 +76,8 @@ private:
         if (fd != -1) {
             fdtype[nfds] = FD_SERIAL;
             fds[nfds++].fd = fd;
+            printf("opening /dev/ttyGS0");
+            //setup_serial(fd);
         } else {
             printf("couldn't open /dev/ttyGS0\n");
         }
@@ -83,14 +86,8 @@ private:
         }
     }
 
-    void handle_evdev(Buffers & buffers, int fd) {
-        struct input_event ev;
-        unsigned int size = read(fd, &ev, sizeof(struct input_event));
+    void handle_evdev(Buffers & buffers, struct input_event ev) {
         int handled = 1;
-        if (size < sizeof(struct input_event)) {
-            printf("error reading from fd %d\n", fd);
-            return;
-        }
         if (ev.type == EV_ABS) {
             if (ev.code == ABS_MT_POSITION_X && ev.value != 0) {
                 if (ev.value != istate.x) istate.moved = 1;
@@ -115,15 +112,25 @@ private:
         }
     }
 
+    void handle_evdev(Buffers & buffers, int fd) {
+        struct input_event ev;
+        unsigned int size = read(fd, &ev, sizeof(struct input_event));
+        if (size < sizeof(struct input_event)) {
+            printf("error reading from fd %d\n", fd);
+            return;
+        }
+        handle_evdev(buffers, ev);
+    }
+
     void handle_serial(Buffers & buffers, int fd) {
-        char buf[512];
+        char buf[1];
         for (;;) {
             int nread = read(fd, buf, sizeof(buf));
-            if (nread == -1) { // errno = EAGAIN for blocking read
+            if (nread == -1 || nread == 0) { // errno = EAGAIN for blocking read
                 break;
             }
             for (int n = 0; n < nread; n++) {
-                buffers.scancodes.push_back(buf[n] | 0x100);
+                buffers.serial.push_back(buf[n]);
             }
         }
     }
