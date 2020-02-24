@@ -48,7 +48,7 @@ public:
                 vterm_screen_get_cell(me->screen, pos, &cell);
 
                 // NOTE: And again after the print call
-                // if (cell.attrs.reverse) &me->config->is_inverted = !&me->config->is_inverted;
+                // if (cell.attrs.reverse) me->config->is_inverted = !me->config->is_inverted;
 
                 update_fg_color(&cell.fg, 0xFFu);
                 update_bg_color(&cell.bg, 0x00u);
@@ -66,9 +66,12 @@ public:
 
     static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
         return 1;
+
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
         vterm_screen_get_cell(me->screen, old, &cell);
+        me->config.col = old.col;
+        me->config.row = old.row;
         update_fg_color(&cell.fg, 0x00u);
         update_bg_color(&cell.bg, 0xFFu);
         if (!*cell.chars) {
