@@ -46,10 +46,10 @@ public:
                 me->config.fg_color = fg;
                 me->config.bg_color = bg;
 
-                if (cell.chars[0] == 0) {
-                    fbink_printf(me->fbfd, nullptr, &me->config, " ");
+                if (!*cell.chars) {
+                    fbink_print(me->fbfd, " ", &me->config);
                 } else {
-                    fbink_printf(me->fbfd, nullptr, &me->config, "%c", cell.chars[0]);
+                    fbink_print(me->fbfd, *cell.chars, &me->config);
                 }
 
             }
@@ -64,18 +64,18 @@ public:
         vterm_screen_get_cell(me->screen, old, &cell);
         me->config.fg_color = brightness(&cell.fg, 255);
         me->config.bg_color = brightness(&cell.bg, 0);
-        if (cell.chars[0] == 0) {
-            fbink_printf(me->fbfd, nullptr, &me->config, " ");
+        if (!*cell.chars) {
+            fbink_print(me->fbfd, " ", &me->config);
         } else {
-            fbink_printf(me->fbfd, nullptr, &me->config, "%c", cell.chars[0]);
+            fbink_print(me->fbfd, *cell.chars, &me->config);
         }
         vterm_screen_get_cell(me->screen, pos, &cell);
         me->config.fg_color = brightness(&cell.bg, 0);
         me->config.bg_color = brightness(&cell.fg, 255);
-        if (cell.chars[0] == 0) {
-            fbink_printf(me->fbfd, nullptr, &me->config, " ");
+        if (!*cell.chars) {
+            fbink_print(me->fbfd, " ", &me->config);
         } else {
-            fbink_printf(me->fbfd, nullptr, &me->config, "%c", cell.chars[0]);
+            fbink_print(me->fbfd, *cell.chars, &me->config);
         }
         return 1;
     }
