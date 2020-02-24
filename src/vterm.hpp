@@ -102,7 +102,6 @@ public:
         fbink_init(fbfd, &config);
         config.bg_color = 255;
         fbink_cls(fbfd, &config, nullptr);
-        fbink_state_dump(&config);
         fbink_get_state(&config, &state);
 
         vtsc = (VTermScreenCallbacks){
