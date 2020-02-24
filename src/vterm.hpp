@@ -47,9 +47,9 @@ public:
                 me->config.bg_color = bg;
 
                 if (cell.chars[0] == 0) {
-                    fbink_printf(me->fbfd, 0, &me->config, " ");
+                    fbink_printf(me->fbfd, nullptr, &me->config, " ");
                 } else {
-                    fbink_printf(me->fbfd, 0, &me->config, "%c", cell.chars[0]);
+                    fbink_printf(me->fbfd, nullptr, &me->config, "%c", cell.chars[0]);
                 }
 
             }
@@ -65,17 +65,17 @@ public:
         me->config.fg_color = brightness(&cell.fg, 255);
         me->config.bg_color = brightness(&cell.bg, 0);
         if (cell.chars[0] == 0) {
-            fbink_printf(me->fbfd, 0, &me->config, " ");
+            fbink_printf(me->fbfd, nullptr, &me->config, " ");
         } else {
-            fbink_printf(me->fbfd, 0, &me->config, "%c", cell.chars[0]);
+            fbink_printf(me->fbfd, nullptr, &me->config, "%c", cell.chars[0]);
         }
         vterm_screen_get_cell(me->screen, pos, &cell);
         me->config.fg_color = brightness(&cell.bg, 0);
         me->config.bg_color = brightness(&cell.fg, 255);
         if (cell.chars[0] == 0) {
-            fbink_printf(me->fbfd, 0, &me->config, " ");
+            fbink_printf(me->fbfd, nullptr, &me->config, " ");
         } else {
-            fbink_printf(me->fbfd, 0, &me->config, "%c", cell.chars[0]);
+            fbink_printf(me->fbfd, nullptr, &me->config, "%c", cell.chars[0]);
         }
         return 1;
     }
@@ -101,7 +101,7 @@ public:
         }
         fbink_init(fbfd, &config);
         config.bg_color = 255;
-        fbink_cls(fbfd, &config, 0);
+        fbink_cls(fbfd, &config, nullptr);
         fbink_state_dump(&config);
         fbink_get_state(&config, &state);
 
