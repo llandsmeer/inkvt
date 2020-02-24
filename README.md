@@ -71,7 +71,36 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 After [some discussion](https://github.com/NiLuJe/FBInk/issues/45), I decided to
 try to build a program which can break into Nickel and drain evdev events.
 So `tracexec.c` was born. Its quite flexible and can be used to execute arbitrary
-assembly/syscalls inside other processes on `amd64` and `arm-eabi`.
+assembly/syscalls inside other processes on `amd64` and `arm-eabi`:
+
+```c
+int main(int argc, char ** argv) {
+    long err;
+    if (argc < 2) { printf("usage:  %s PID\n", argv[0]); exit(1); }
+    pid = atoi(argv[1]);
+    try_ptrace(PTRACE_SEIZE, pid, 0, 0);
+    try_ptrace(PTRACE_GETREGS, pid, 0, &reset_regs);
+
+    // execute a syscall inside tracee
+    int syscall_pid = tracee_syscall(__NR_getpid, 0);
+    printf("tracee pid: %d\n", syscall_pid);
+
+    // execute assembly inside tracee
+    TRACEE_ASM(
+        "push 0x2048454c\n"
+        "mov rax, 1\n"
+        "mov rdi, 1\n"
+        "mov rsi, rsp\n"
+        "mov rdx, 4\n"
+        "syscall\n"
+        "pop rax\n"
+    )
+
+    try_ptrace(PTRACE_SETREGS, pid, 0, &reset_regs);
+    try_ptrace(PTRACE_DETACH, pid, 0, SIGSTOP);
+    return 0;
+}
+```
 
 # Related projects:
 
