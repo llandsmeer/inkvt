@@ -1,7 +1,7 @@
 #include <algorithm>
 
 #include "../libvterm-0.1.3/include/vterm.h"
-#include "./fbink.h"
+#include "../FBInk/fbink.h"
 
 class VTermToFBInk {
 public:
