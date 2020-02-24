@@ -17,7 +17,7 @@ public:
         if (VTERM_COLOR_IS_RGB(c)) {
             fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
         } else {
-            fbink_set_fg_pen_gray(def, false);
+            fbink_set_fg_pen_gray(def, false, true);
         }
     }
 
@@ -25,7 +25,7 @@ public:
         if (VTERM_COLOR_IS_RGB(c)) {
             fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
         } else {
-            fbink_set_bg_pen_gray(def, false);
+            fbink_set_bg_pen_gray(def, false, true);
         }
     }
 
