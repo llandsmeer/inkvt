@@ -1,10 +1,21 @@
 # vim: filetype=make
+# kate: syntax Makefile
 
 ifdef CROSS_TC
 	CC:=$(CROSS_TC)-gcc
 	CXX:=$(CROSS_TC)-g++
 	STRIP:=$(CROSS_TC)-strip
 	AR:=$(CROSS_TC)-gcc-ar
+	RANLIB:=$(CROSS_TC)-gcc-ranlib
+endif
+
+ifdef NATIVE_TC
+	CC:=gcc
+	CXX:=g++
+	STRIP:=strip
+	AR:=gcc-ar
+	RANLIB:=gcc-ranlib
+	CFLAGS:=-march=native -pipe -O2 -fomit-frame-pointer
 endif
 
 ifndef OUT
@@ -16,12 +27,12 @@ TBLFILES=$(wildcard $(LIBVTERM)/src/encoding/*.tbl)
 INCFILES=$(TBLFILES:.tbl=.inc)
 VTERMCFILES=$(wildcard $(LIBVTERM)/src/*.c)
 VTERMOFILES=$(VTERMCFILES:.c=.o)
-CFLAGS=-std=c99 -c -Wall -I$(LIBVTERM)/include
+CFLAGS+=-std=c99 -c -Wall -I$(LIBVTERM)/include
 
 all: $(VTERMOFILES)
 	mkdir -p build
 	$(AR) rc build/$(OUT) $(VTERMOFILES)
-	ranlib build/$(OUT)
+	$(RANLIB) build/$(OUT)
 
 $(LIBVTERM)/src/%.o: $(LIBVTERM)/src/%.c
 	$(CC) $(CFLAGS) $? -o $@
