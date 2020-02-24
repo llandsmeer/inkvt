@@ -15,7 +15,7 @@ public:
 
     static void update_fg_color(VTermColor * c, uint8_t def) {
         if (VTERM_COLOR_IS_RGB(c)) {
-            fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false);
+            fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
         } else {
             fbink_set_fg_pen_gray(def, false);
         }
@@ -23,7 +23,7 @@ public:
 
     static void update_bg_color(VTermColor * c, uint8_t def) {
         if (VTERM_COLOR_IS_RGB(c)) {
-            fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false);
+            fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
         } else {
             fbink_set_bg_pen_gray(def, false);
         }
@@ -38,8 +38,6 @@ public:
         VTermScreenCell cell;
         VTermPos pos;
         int row, col;
-        VTermColor prev_fg = { 0 };
-        VTermColor prev_bg = { 0 };
         fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
         for (row = rect.start_row; row < rect.end_row; row++) {
             for (col = rect.start_col; col < rect.end_col; col++) {
@@ -52,26 +50,8 @@ public:
                 // NOTE: And again after the print call
                 // if (cell.attrs.reverse) me->config->is_inverted = !me->config->is_inverted;
 
-                if (!vterm_color_is_equal(&prev_fg, &cell.fg)) {
-                    fprintf(stdout, "Update FG color from #%02X%02X%02X to #%02X%02X%02X\n", prev_fg.rgb.red, prev_fg.rgb.green, prev_fg.rgb.blue, cell.fg.rgb.red, cell.fg.rgb.green, cell.fg.rgb.blue);
-                    update_fg_color(&cell.fg, 0xFFu);
-                    if (VTERM_COLOR_IS_RGB(&cell.fg)) {
-                        vterm_color_rgb(&prev_fg, cell.fg.rgb.red, cell.fg.rgb.green, cell.fg.rgb.blue);
-                    } else {
-                        vterm_color_indexed(&prev_fg, cell.fg.indexed.idx);
-                    }
-                    fprintf(stdout, "FG color is now #%02X%02X%02X\n", prev_fg.rgb.red, prev_fg.rgb.green, prev_fg.rgb.blue);
-                }
-                if (!vterm_color_is_equal(&prev_bg, &cell.bg)) {
-                    fprintf(stdout, "Update BG color from #%02X%02X%02X to #%02X%02X%02X\n", prev_bg.rgb.red, prev_bg.rgb.green, prev_bg.rgb.blue, cell.bg.rgb.red, cell.bg.rgb.green, cell.bg.rgb.blue);
-                    update_bg_color(&cell.bg, 0x00u);
-                    if (VTERM_COLOR_IS_RGB(&cell.bg)) {
-                        vterm_color_rgb(&prev_bg, cell.bg.rgb.red, cell.bg.rgb.green, cell.bg.rgb.blue);
-                    } else {
-                        vterm_color_indexed(&prev_bg, cell.bg.indexed.idx);
-                    }
-                    fprintf(stdout, "BG color is now #%02X%02X%02X\n", prev_bg.rgb.red, prev_bg.rgb.green, prev_bg.rgb.blue);
-                }
+                update_fg_color(&cell.fg, 0xFFu);
+                update_bg_color(&cell.bg, 0x00u);
 
                 if (cell.chars[0] == 0U) {
                     fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
