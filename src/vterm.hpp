@@ -109,7 +109,6 @@ public:
             exit(1);
         }
         fbink_init(fbfd, &config);
-        config.bg_color = 255;
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
 
