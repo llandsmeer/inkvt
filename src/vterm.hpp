@@ -38,7 +38,11 @@ public:
         VTermScreenCell cell;
         VTermPos pos;
         int row, col;
-        fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
+
+        //fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
+        // NOTE: Optimize large rects by only doing a single refresh call, instead of paired with cell-per-cell drawing.
+        me->config.no_refresh = true;
+
         for (row = rect.start_row; row < rect.end_row; row++) {
             for (col = rect.start_col; col < rect.end_col; col++) {
                 pos.col = col;
@@ -61,6 +65,13 @@ public:
 
             }
         }
+
+        // Refresh the full rectangle
+        me->config.no_refresh = false;
+        me->config.col = rect.start_col;
+        me->config.row = rect.start_row;
+        fbink_grid_refresh(me->fbfd, rect.end_row - rect.start_row, rect.end_col - rect.start_col, &me->config);
+
         return 1;
     }
 
