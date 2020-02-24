@@ -47,7 +47,7 @@ int main() {
     inputs.setup();
     inputs.add_progout(pty.master);
     const char header[] = "inkvt\nversion " GITHASH "\n\n";
-    for (int i = 0; i < sizeof(header); i++) {
+    for (size_t i = 0; i < sizeof(header); i++) {
         buffers.vt100_in.push_back(header[i]);
     }
     for (;;) {
