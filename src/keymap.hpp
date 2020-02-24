@@ -18,7 +18,7 @@
 #pragma once
 
 #include <deque>
-#include <linux/input-event-codes.h>
+#include <linux/input.h>
 #include <stdio.h>
 
 struct Keymap {
