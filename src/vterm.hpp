@@ -1,10 +1,7 @@
 #include <algorithm>
 
 #include "../libvterm-0.1.3/include/vterm.h"
-#define restrict __restrict__
-extern "C" {
 #include "./fbink.h"
-}
 
 class VTermToFBInk {
 public:
