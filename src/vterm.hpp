@@ -13,11 +13,20 @@ public:
     FBInkConfig config = { 0 };
     FBInkState state = { 0 };
 
-    static uint8_t brightness(VTermColor * c, uint8_t def) {
+    static void update_fg_color(VTermColor * c, uint8_t def) {
         if (VTERM_COLOR_IS_RGB(c)) {
-            return 0.2989*c->rgb.red + 0.5870*c->rgb.green + 0.1140*c->rgb.blue;
+            fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false);
+        } else {
+            fbink_set_fg_pen_gray(def, false);
         }
-        return def;
+    }
+
+    static void update_bg_color(VTermColor * c, uint8_t def) {
+        if (VTERM_COLOR_IS_RGB(c)) {
+            fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false);
+        } else {
+            fbink_set_bg_pen_gray(def, false);
+        }
     }
 
     void write(char byte) {
@@ -38,13 +47,11 @@ public:
                 me->config.row = row;
                 vterm_screen_get_cell(me->screen, pos, &cell);
 
-                fg = brightness(&cell.fg, 255);
-                bg = brightness(&cell.bg, 0);
+                // NOTE: And again after the print call
+                // if (cell.attrs.reverse) &me->config->is_inverted = !&me->config->is_inverted;
 
-                // if (cell.attrs.reverse) std::swap(fg, bg);
-
-                me->config.fg_color = fg;
-                me->config.bg_color = bg;
+                update_fg_color(&cell.fg, 0xFFu);
+                update_bg_color(&cell.bg, 0x00u);
 
                 if (!*cell.chars) {
                     fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
@@ -62,16 +69,16 @@ public:
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
         vterm_screen_get_cell(me->screen, old, &cell);
-        me->config.fg_color = brightness(&cell.fg, 255);
-        me->config.bg_color = brightness(&cell.bg, 0);
+        update_fg_color(&cell.fg, 0x00u);
+        update_bg_color(&cell.bg, 0xFFu);
         if (!*cell.chars) {
             fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
             fbink_print(me->fbfd, *cell.chars, &me->config);
         }
         vterm_screen_get_cell(me->screen, pos, &cell);
-        me->config.fg_color = brightness(&cell.bg, 0);
-        me->config.bg_color = brightness(&cell.fg, 255);
+        update_fg_color(&cell.fg, 0xFFu);
+        update_bg_color(&cell.bg, 0x00u);
         if (!*cell.chars) {
             fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
