@@ -47,7 +47,7 @@ public:
                 me->config.bg_color = bg;
 
                 if (!*cell.chars) {
-                    fbink_print(me->fbfd, " ", &me->config);
+                    fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
                 } else {
                     fbink_print(me->fbfd, *cell.chars, &me->config);
                 }
@@ -65,7 +65,7 @@ public:
         me->config.fg_color = brightness(&cell.fg, 255);
         me->config.bg_color = brightness(&cell.bg, 0);
         if (!*cell.chars) {
-            fbink_print(me->fbfd, " ", &me->config);
+            fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
             fbink_print(me->fbfd, *cell.chars, &me->config);
         }
@@ -73,7 +73,7 @@ public:
         me->config.fg_color = brightness(&cell.bg, 0);
         me->config.bg_color = brightness(&cell.fg, 255);
         if (!*cell.chars) {
-            fbink_print(me->fbfd, " ", &me->config);
+            fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
             fbink_print(me->fbfd, *cell.chars, &me->config);
         }
