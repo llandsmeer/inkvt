@@ -37,7 +37,6 @@ public:
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
         VTermPos pos;
-        uint8_t fg, bg;
         int row, col;
         for (row = rect.start_row; row < rect.end_row; row++) {
             for (col = rect.start_col; col < rect.end_col; col++) {
@@ -53,10 +52,10 @@ public:
                 update_fg_color(&cell.fg, 0xFFu);
                 update_bg_color(&cell.bg, 0x00u);
 
-                if (!*cell.chars) {
+                if (cell.chars[0] == 0U) {
                     fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
                 } else {
-                    fbink_print(me->fbfd, *cell.chars, &me->config);
+                    fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
                 }
 
             }
@@ -74,18 +73,18 @@ public:
         me->config.row = old.row;
         update_fg_color(&cell.fg, 0x00u);
         update_bg_color(&cell.bg, 0xFFu);
-        if (!*cell.chars) {
+        if (cell.chars[0] == 0U) {
             fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
-            fbink_print(me->fbfd, *cell.chars, &me->config);
+            fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
         }
         vterm_screen_get_cell(me->screen, pos, &cell);
         update_fg_color(&cell.fg, 0xFFu);
         update_bg_color(&cell.bg, 0x00u);
-        if (!*cell.chars) {
+        if (cell.chars[0] == 0U) {
             fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
-            fbink_print(me->fbfd, *cell.chars, &me->config);
+            fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
         }
         return 1;
     }
