@@ -23,6 +23,11 @@ how to use the api.
 
 # Install & Usage
 
+The `make kobo` target expects a working `arm-eabihf` cross-compiler.
+I downloaded mine from [Linaro](https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/)
+(as that seems to be the one the Kobo team uses), but other builds might work just as fine.
+Then update the `CROSS_TC` variable in the Makefile.
+
 ```
 $ git clone 'https://github.com/llandsmeer/inkvt'
 $ cd inkvt
@@ -42,25 +47,29 @@ Which should generate 3 binaries:
 So to run, copy `./build/vterm.xarm` to `/mnt/onboard`, SSH into the Kobo device and run `./vterm.xarm`.
 Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 
-# Todo:
+# Todo
 
  - Implement `vterm` callback `moverect`
  - Implement `vterm` callback `movecursor`
+ - Switch default `sh` to `bash`
  - Make it runnable from KFMon and KOReader. I'm thinking, reading `/proc/*/fd` for processes
    that are reading `/dev/input/event*`, `SIGSTOP`-ing them and using `tracexec` to
    ungrab and drain their evdev devices. Or maybe even temporary close the file.
    This would also mean that I have to catch all signals/segv and handle them gracefully.
    Or just copy the setup scripts from KOReader.
+ - Add hideable touchscreen keyboard / settings bar
  - Lock: detect if inkterm is already running and fail if so.
    Executing `evdev2serial` and then running `./vterm.xarm` usually results in inkvt
    starting twice, because the keypresses that start it are also send to inkvt over serial...
  - Get Ctrl-<KEY> escape sequences working for keys other than standard printable ascii.
    [This](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html) might be of help.
- - Connect an actual hardware keyboard. Simplest solution would be putting a Raspberry Pi bi between
+ - Connect an actual hardware keyboard. Simplest solution would be putting a Raspberry Pi between
    the keyboard and kobo and running `build/evdev2serial.x86`, compiled on the Raspberry I think.
- - Detect `sh` exit. And switch to `bash`.
- - Disable pty key printing while `build/vterm.x86` runs. Probably just `noecho`.
-   Currently linux console and inkvt fight over the virtual terminal.
+ - Detect `pty(7)` slave `sh` exit.
+ - Disable stdin printing while `build/vterm.x86` runs. Probably just `noecho`.
+   Currently linux console and inkvt fight over the framebuffer.
+   Maybe limit stdout/stderr too/move printfs to something that that be configured
+   to output to the framebuffer.
  - Handle screen rotation
  - Implement `vterm` callback `settermprop`
  - Switch to vectorized font. Preferable something typewriter like. And include the
