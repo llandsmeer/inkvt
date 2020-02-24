@@ -70,7 +70,7 @@ public:
         me->config.no_refresh = false;
         me->config.col = rect.start_col;
         me->config.row = rect.start_row;
-        fbink_grid_refresh(me->fbfd, rect.end_row - rect.start_row, rect.end_col - rect.start_col, &me->config);
+        fbink_grid_refresh(me->fbfd, rect.end_col - rect.start_col, rect.end_row - rect.start_row, &me->config);
 
         return 1;
     }
