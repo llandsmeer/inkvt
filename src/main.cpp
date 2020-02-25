@@ -53,6 +53,7 @@ int main() {
     vterm.setup();
     inputs.setup();
     inputs.add_progout(pty.master);
+    pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
     const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n";
     for (size_t i = 0; i < sizeof(header); i++) {
         buffers.vt100_in.push_back(header[i]);
