@@ -1,10 +1,7 @@
 #include <algorithm>
 
 #include "../libvterm-0.1.3/include/vterm.h"
-#define restrict __restrict__
-extern "C" {
-#include "./fbink.h"
-}
+#include "../FBInk/fbink.h"
 
 class VTermToFBInk {
 public:
@@ -16,11 +13,20 @@ public:
     FBInkConfig config = { 0 };
     FBInkState state = { 0 };
 
-    static uint8_t brightness(VTermColor * c, uint8_t def) {
+    static void update_fg_color(VTermColor * c, uint8_t def) {
         if (VTERM_COLOR_IS_RGB(c)) {
-            return 0.2989*c->rgb.red + 0.5870*c->rgb.green + 0.1140*c->rgb.blue;
+            fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+        } else {
+            fbink_set_fg_pen_gray(def, false, true);
         }
-        return def;
+    }
+
+    static void update_bg_color(VTermColor * c, uint8_t def) {
+        if (VTERM_COLOR_IS_RGB(c)) {
+            fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+        } else {
+            fbink_set_bg_pen_gray(def, false, true);
+        }
     }
 
     void write(char byte) {
@@ -31,8 +37,12 @@ public:
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
         VTermPos pos;
-        uint8_t fg, bg;
         int row, col;
+
+        //fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
+        // NOTE: Optimize large rects by only doing a single refresh call, instead of paired with cell-per-cell drawing.
+        me->config.no_refresh = true;
+
         for (row = rect.start_row; row < rect.end_row; row++) {
             for (col = rect.start_col; col < rect.end_col; col++) {
                 pos.col = col;
@@ -41,44 +51,52 @@ public:
                 me->config.row = row;
                 vterm_screen_get_cell(me->screen, pos, &cell);
 
-                fg = brightness(&cell.fg, 255);
-                bg = brightness(&cell.bg, 0);
+                // NOTE: And again after the print call
+                // if (cell.attrs.reverse) me->config->is_inverted = !me->config->is_inverted;
 
-                // if (cell.attrs.reverse) std::swap(fg, bg);
+                update_fg_color(&cell.fg, 0xFFu);
+                update_bg_color(&cell.bg, 0x00u);
 
-                me->config.fg_color = fg;
-                me->config.bg_color = bg;
-
-                if (cell.chars[0] == 0) {
-                    fbink_printf(me->fbfd, 0, &me->config, " ");
+                if (cell.chars[0] == 0U) {
+                    fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
                 } else {
-                    fbink_printf(me->fbfd, 0, &me->config, "%c", cell.chars[0]);
+                    fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
                 }
 
             }
         }
+
+        // Refresh the full rectangle
+        me->config.no_refresh = false;
+        me->config.col = rect.start_col;
+        me->config.row = rect.start_row;
+        fbink_grid_refresh(me->fbfd, rect.end_col - rect.start_col, rect.end_row - rect.start_row, &me->config);
+
         return 1;
     }
 
     static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
         return 1;
+
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
         vterm_screen_get_cell(me->screen, old, &cell);
-        me->config.fg_color = brightness(&cell.fg, 255);
-        me->config.bg_color = brightness(&cell.bg, 0);
-        if (cell.chars[0] == 0) {
-            fbink_printf(me->fbfd, 0, &me->config, " ");
+        me->config.col = old.col;
+        me->config.row = old.row;
+        update_fg_color(&cell.fg, 0x00u);
+        update_bg_color(&cell.bg, 0xFFu);
+        if (cell.chars[0] == 0U) {
+            fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
-            fbink_printf(me->fbfd, 0, &me->config, "%c", cell.chars[0]);
+            fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
         }
         vterm_screen_get_cell(me->screen, pos, &cell);
-        me->config.fg_color = brightness(&cell.bg, 0);
-        me->config.bg_color = brightness(&cell.fg, 255);
-        if (cell.chars[0] == 0) {
-            fbink_printf(me->fbfd, 0, &me->config, " ");
+        update_fg_color(&cell.fg, 0xFFu);
+        update_bg_color(&cell.bg, 0x00u);
+        if (cell.chars[0] == 0U) {
+            fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
         } else {
-            fbink_printf(me->fbfd, 0, &me->config, "%c", cell.chars[0]);
+            fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
         }
         return 1;
     }
@@ -103,9 +121,7 @@ public:
             exit(1);
         }
         fbink_init(fbfd, &config);
-        config.bg_color = 255;
-        fbink_cls(fbfd, &config, 0);
-        fbink_state_dump(&config);
+        fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
 
         vtsc = (VTermScreenCallbacks){

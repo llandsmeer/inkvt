@@ -51,7 +51,6 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 
  - Implement `vterm` callback `moverect`
  - Implement `vterm` callback `movecursor`
- - Switch default `sh` to `bash`
  - Make it runnable from KFMon and KOReader. I'm thinking, reading `/proc/*/fd` for processes
    that are reading `/dev/input/event*`, `SIGSTOP`-ing them and using `tracexec` to
    ungrab and drain their evdev devices. Or maybe even temporary close the file.

@@ -1,3 +1,4 @@
 [submodule "FBInk"]
 	path = FBInk
 	url = https://github.com/NiLuJe/FBInk/
+	fetchRecurseSubmodules = true
