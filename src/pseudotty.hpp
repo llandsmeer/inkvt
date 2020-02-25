@@ -28,6 +28,18 @@ public:
         ::write(master, &c, 1);
     }
 
+    void set_size(int rows, int cols) {
+        struct {
+            unsigned short ws_row;
+            unsigned short ws_col;
+            unsigned short ws_xpixel;   /* unused */
+            unsigned short ws_ypixel;   /* unused */
+        } winsize = { 0 };
+        winsize.ws_row = rows;
+        winsize.ws_col = cols;
+        ioctl(master, TIOCSWINSZ, &winsize);
+    }
+
     void setup() {
         pid = forkpty(&master, 0, 0, 0);
         if (pid < 0) {
