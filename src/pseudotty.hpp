@@ -33,7 +33,7 @@ public:
         if (pid < 0) {
             exit(EXIT_FAILURE);
         } else if (pid == 0) {
-            char shell[] = "/bin/sh";
+            char shell[] = "/bin/bash";
             char * const args[] = { shell, 0 };
             execve(shell, args, environ);
         } else {
