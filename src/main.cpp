@@ -32,6 +32,10 @@ PseudoTTY pty;
 VTermToFBInk vterm;
 KeycodeTranslation keytrans;
 
+// NOTE: Obviously highly platform-specific ;).
+//       See http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Kobo_Hacks/KoboStuff/src/usr/local/stuff/bin/usbnet-toggle.sh for a slightly more portable example.
+// NOTE: Extra fun fact: I don't know when Kobo started shipping g_serial, but they didn't on Mk.5, so, here's one I just built to test on my H2O:
+//       http://files.ak-team.com/niluje/mrpub/Other/USBSerial-Kobo-Mk5-H2O.tar.gz
 static void setup_drivers() {
 #ifdef TARGET_KOBO
     system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
@@ -49,8 +53,8 @@ int main() {
     vterm.setup();
     inputs.setup();
     inputs.add_progout(pty.master);
-    const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n\r\n";
-    for (unsigned i = 0; i < sizeof(header); i++) {
+    const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n";
+    for (size_t i = 0; i < sizeof(header); i++) {
         buffers.vt100_in.push_back(header[i]);
     }
     for (;;) {
