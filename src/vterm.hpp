@@ -99,12 +99,12 @@ public:
     }
 
     static int term_moverect(VTermRect dst, VTermRect src, void * user) {
-        // printf("\nSRC: %d %d %d %d\n", src.start_row, src.end_row, src.start_col, src.end_col);
-        // printf("DST: %d %d %d %d\n", dst.start_row, dst.end_row, dst.start_col, dst.end_col);
-        // preferable, a direct copy will be better
-        // but something that works is also nice
         term_damage(dst, user);
         return 1;
+        // this should work I thing but doesnt:
+        // preferable, a direct copy will be better
+        // but something that works is also nice
+        /*
         VTermToFBInk * me = (VTermToFBInk*)user;
         short int x_off, y_off;
         unsigned short int w, h;
@@ -115,11 +115,12 @@ public:
         if (h > 100) h = 100;
         if (w > 100) w = 100;
         fbink_region_dump(me->fbfd, x_off, y_off, w, h, &me->config, &me->dump);
-        x_off = me->state.glyph_width*dst.start_row;
-        y_off = me->state.glyph_height*dst.start_col;
+        me->dump.area.top = me->state.glyph_width*dst.start_row;
+        me->dump.area.left = me->state.glyph_height*dst.start_col;
         fbink_restore(me->fbfd, &me->config, &me->dump);
         // fbink_free_dump_data(&me->dump);
         return 1;
+        */
     }
 
     static int term_settermprop(VTermProp prop, VTermValue * val, void * user) {
