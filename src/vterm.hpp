@@ -3,6 +3,11 @@
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
 
+
+extern "C" {
+    extern bool g_isQuiet;
+}
+
 class VTermToFBInk {
 public:
     VTerm * term;
@@ -12,20 +17,24 @@ public:
     int fbfd;
     FBInkConfig config = { 0 };
     FBInkState state = { 0 };
+    FBInkDump dump = { 0 };
 
-    static void update_fg_color(VTermColor * c, uint8_t def) {
-        if (VTERM_COLOR_IS_RGB(c)) {
-            fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
-        } else {
-            fbink_set_fg_pen_gray(def, false, true);
-        }
+    void update_fg_color(VTermColor * c) {
+        vterm_screen_convert_color_to_rgb(screen, c);
+        fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
     }
 
-    static void update_bg_color(VTermColor * c, uint8_t def) {
-        if (VTERM_COLOR_IS_RGB(c)) {
-            fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+    void update_bg_color(VTermColor * c) {
+        vterm_screen_convert_color_to_rgb(screen, c);
+        fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+    }
+
+    void output_char(const char c) {
+        char buf[2] = {c, 0};
+        if (c == 0) {
+            fbink_grid_clear(fbfd, 1U, 1U, &config);
         } else {
-            fbink_set_bg_pen_gray(def, false, true);
+            fbink_print(fbfd, buf, &config);
         }
     }
 
@@ -50,19 +59,11 @@ public:
                 me->config.col = col;
                 me->config.row = row;
                 vterm_screen_get_cell(me->screen, pos, &cell);
-
                 // NOTE: And again after the print call
                 // if (cell.attrs.reverse) me->config->is_inverted = !me->config->is_inverted;
-
-                update_fg_color(&cell.fg, 0xFFu);
-                update_bg_color(&cell.bg, 0x00u);
-
-                if (cell.chars[0] == 0U) {
-                    fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
-                } else {
-                    fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
-                }
-
+                me->update_fg_color(&cell.fg);
+                me->update_bg_color(&cell.bg);
+                me->output_char(cell.chars[0]);
             }
         }
 
@@ -76,33 +77,48 @@ public:
     }
 
     static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
-        return 1;
-
         VTermToFBInk * me = (VTermToFBInk*)user;
         VTermScreenCell cell;
+
+        // remove previous cursor
         vterm_screen_get_cell(me->screen, old, &cell);
         me->config.col = old.col;
         me->config.row = old.row;
-        update_fg_color(&cell.fg, 0x00u);
-        update_bg_color(&cell.bg, 0xFFu);
-        if (cell.chars[0] == 0U) {
-            fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
-        } else {
-            fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
-        }
+        me->update_fg_color(&cell.fg);
+        me->update_bg_color(&cell.bg);
+        me->output_char(cell.chars[0]);
+
+        // add new cursor
         vterm_screen_get_cell(me->screen, pos, &cell);
-        update_fg_color(&cell.fg, 0xFFu);
-        update_bg_color(&cell.bg, 0x00u);
-        if (cell.chars[0] == 0U) {
-            fbink_grid_clear(me->fbfd, 1U, 1U, &me->config);
-        } else {
-            fbink_print(me->fbfd, reinterpret_cast<char *>(cell.chars), &me->config);
-        }
+        me->config.col = pos.col;
+        me->config.row = pos.row;
+        me->update_fg_color(&cell.bg); // NOTE: fb and bg inverted
+        me->update_bg_color(&cell.fg); // for color inversion
+        me->output_char(cell.chars[0]);
         return 1;
     }
 
-    static int term_moverect(VTermRect dest, VTermRect src, void * user) {
-        // term_damage(dest, user);
+    static int term_moverect(VTermRect dst, VTermRect src, void * user) {
+        // printf("\nSRC: %d %d %d %d\n", src.start_row, src.end_row, src.start_col, src.end_col);
+        // printf("DST: %d %d %d %d\n", dst.start_row, dst.end_row, dst.start_col, dst.end_col);
+        // preferable, a direct copy will be better
+        // but something that works is also nice
+        term_damage(dst, user);
+        return 1;
+        VTermToFBInk * me = (VTermToFBInk*)user;
+        short int x_off, y_off;
+        unsigned short int w, h;
+        x_off = me->state.glyph_width*src.start_row;
+        y_off = me->state.glyph_height*src.start_col;
+        w = me->state.glyph_width*(src.end_row - src.start_row + 1);
+        h = me->state.glyph_height*(src.end_col - src.start_col + 1);
+        if (h > 100) h = 100;
+        if (w > 100) w = 100;
+        fbink_region_dump(me->fbfd, x_off, y_off, w, h, &me->config, &me->dump);
+        x_off = me->state.glyph_width*dst.start_row;
+        y_off = me->state.glyph_height*dst.start_col;
+        fbink_restore(me->fbfd, &me->config, &me->dump);
+        // fbink_free_dump_data(&me->dump);
         return 1;
     }
 
@@ -121,10 +137,11 @@ public:
             exit(1);
         }
         config.fontname = FONT_INDEX_E::TERMINUS;
+        config.fontmult = 1;
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
-        config.is_quiet = 1;
+        g_isQuiet = 1; // couldn't get config.quiet to work
 
         vtsc = (VTermScreenCallbacks){
             .damage = VTermToFBInk::term_damage,
