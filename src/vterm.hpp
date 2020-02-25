@@ -120,9 +120,11 @@ public:
             puts("fbink_open()");
             exit(1);
         }
+        config.fontname = FONT_INDEX_E::TERMINUS;
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
+        config.is_quiet = 1;
 
         vtsc = (VTermScreenCallbacks){
             .damage = VTermToFBInk::term_damage,
