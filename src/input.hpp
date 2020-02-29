@@ -151,7 +151,12 @@ public:
                 handle_serial(buffers, fds[i].fd);
             }
             if (fdtype[i] == FD_PROGOUT) {
-                handle_progout(buffers, fds[i].fd);
+                if (fds[i].revents & POLLHUP) {
+                    // pty slave disconnected
+                    exit(0);
+                } else {
+                    handle_progout(buffers, fds[i].fd);
+                }
             }
             if (fdtype[i] == FD_SERVER) {
                 handle_server(buffers, fds[i].fd);
@@ -189,7 +194,7 @@ public:
 
     void add_progout(int fd) {
         fdtype[nfds] = FD_PROGOUT;
-        fds[nfds].events = POLLIN;
+        fds[nfds].events = POLLIN | POLLHUP;
         fds[nfds++].fd = fd;
     }
 
