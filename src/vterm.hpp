@@ -21,12 +21,14 @@ public:
 
     void update_fg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-        fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+#define BG(x) (127 + (x)/2)
+        fbink_set_bg_pen_rgba(BG(c->rgb.red), BG(c->rgb.green), BG(c->rgb.blue), 0xFFu, false, true);
+#undef BG
     }
 
     void update_bg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-        fbink_set_bg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+        fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
     }
 
     void output_char(const char c) {
@@ -138,7 +140,7 @@ public:
             exit(1);
         }
         config.fontname = FONT_INDEX_E::TERMINUS;
-        config.fontmult = 1;
+        config.fontmult = 3;
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);

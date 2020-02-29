@@ -11,7 +11,6 @@ but it (OTG) is supported by the hardware. For now I use my laptop as host,
 which sends keystrokes over serial to the Kobo device via the `g_serial`
 loadable kernel module that comes with the device.
 
-
 `inkvt` is mostly a wrapper around two really nice libraries:
 
   - [FBInk](https://github.com/NiLuJe/FBInk/)
@@ -40,12 +39,11 @@ The first one targets the kobo, the second one the host's linux.
 If you want to try this on a desktop linux, run it outside
 X/Wayland using <kbd>Ctrl+Alt+F3</kbd>.
 
-To send keyboard input from you machine to the kobo (this requires
-firmware version 7 and Kobo Libra H2O or similar hardware):
-
-```
-screen /dev/ttyACM0 9600
-```
+To send keyboard input, there are 3 options:
+ - `screen /dev/ttyACM0 9600` (this requires firmware version 7 and Kobo Libra H2O or similar hardware):
+ - if you started inkvt from ssh, stdin
+ - by sending keyboard input with a http post request to port 7800. Haven't got this working
+   on the kobo libra yet.
 
 # Alternative input method (evdev & evdev over serial)
 
@@ -66,6 +64,8 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 
 # Todo
 
+ - I just got really strange errors about wrong `GLIBCXX_3.4` versions? I fixed it with `-static`
+   but now the binary is 13Mb. I think its due to std::allocator via std::string/std::stringstream?
  - Implement `vterm` callback `moverect`
  - Implement `vterm` callback `movecursor`
  - Make it runnable from KFMon and KOReader. I'm thinking, reading `/proc/*/fd` for processes
@@ -74,7 +74,7 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
    This would also mean that I have to catch all signals/segv and handle them gracefully.
    Or just copy the setup scripts from KOReader.
  - Add hideable touchscreen keyboard / settings bar
- - Lock: detect if inkterm is already running and fail if so.
+ - Lock: detect if inkvt is already running and fail if so.
    Executing `evdev2serial` and then running `./vterm.xarm` usually results in inkvt
    starting twice, because the keypresses that start it are also send to inkvt over serial...
  - Get Ctrl-<KEY> escape sequences working for keys other than standard printable ascii.

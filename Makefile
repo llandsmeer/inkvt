@@ -27,7 +27,7 @@ endif
 
 kobo: build/libfbink_kobo.a build/libvterm_kobo.a
 	python3 keymap.py > src/_keymap.hpp
-	$(CROSS_TC)-g++ -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
+	$(CROSS_TC)-g++ -static -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
 
 build/libvterm.a:
 	make -f Makevterm clean

