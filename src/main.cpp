@@ -22,6 +22,7 @@
 #include "./pseudotty.hpp"
 #include "./vterm.hpp"
 #include "./_keymap.hpp"
+#include "./buffers.hpp"
 
 #ifndef GITHASH
 #define GITHASH "<unknown>"
@@ -42,10 +43,13 @@ int main() {
     pty.setup();
     vterm.setup();
     inputs.add_progout(pty.master);
-    // inputs.add_evdev();
-    // inputs.add_serial();
-    inputs.add_signals();
+    inputs.add_serial();
+#ifdef INPUT_EVDEV
+    inputs.add_evdev();
+#else
     inputs.add_ttyraw();
+#endif
+    inputs.add_signals();
     inputs.add_http(7800);
     atexit(handle_atexit);
     pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
@@ -55,6 +59,7 @@ int main() {
     }
     for (;;) {
         inputs.wait(buffers);
+#ifdef INPUT_EVDEV
         while (buffers.serial.size() >= netev_size) {
             struct input_event ev;
             if (netev_read(buffers.serial.data(), ev)) {
@@ -72,6 +77,13 @@ int main() {
                 buffers.serial.erase(buffers.serial.begin());
             }
         }
+#else
+        while (buffers.serial.size() > 0) {
+            int c = buffers.serial.front();
+            buffers.serial.pop_front();
+            buffers.keyboard.push_back(c);
+        }
+#endif
         while (buffers.scancodes.size() > 0) {
             int c = buffers.scancodes.front();
             buffers.scancodes.pop_front();

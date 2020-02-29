@@ -6,7 +6,11 @@
 struct Buffers {
     std::deque<int> prog_stdout;
     std::deque<int> scancodes;
-    std::vector<char> serial;
+#ifdef INPUT_EVDEV
+    std::vector<char> serial; // needs a continuous chunk of memory to cast to struct
+#else
+    std::deque<char> serial;
+#endif
     std::deque<char> keyboard;
     std::deque<int> vt100_in;
 };

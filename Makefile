@@ -2,7 +2,12 @@ GITHASH='"'$(shell git log --format="%H" -n 1)'"'
 
 CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 
-CPPFLAGS+=-Wall -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
+CPPFLAGS += -Wall -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
+
+ifeq ($(INPUT_EVDEV),"true")
+	CPPFLAGS += -DINPUT_EVDEV
+endif
+
 LDFLAGS+=-lm -Lbuild -lutil
 
 all: tracexec linux kobo
@@ -16,7 +21,9 @@ build/tracexec.x:
 linux: build/libfbink.a build/libvterm.a
 	python3 keymap.py > src/_keymap.hpp
 	g++ src/main.cpp -lvterm -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
+ifeq ($(INPUT_EVDEV),"true")
 	g++ src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS) $(CPPFLAGS)
+endif
 
 kobo: build/libfbink_kobo.a build/libvterm_kobo.a
 	python3 keymap.py > src/_keymap.hpp

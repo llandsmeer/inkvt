@@ -35,7 +35,24 @@ $ make
 [...]
 ```
 
-Which should generate 3 binaries:
+Which generates 2 binaries: `build/vterm.xarm` and `build/vterm.x86`.
+The first one targets the kobo, the second one the host's linux.
+If you want to try this on a desktop linux, run it outside
+X/Wayland using <kbd>Ctrl+Alt+F3</kbd>.
+
+To send keyboard input from you machine to the kobo (this requires
+firmware version 7 and Kobo Libra H2O or similar hardware):
+
+```
+screen /dev/ttyACM0 9600
+```
+
+# Alternative input method (evdev & evdev over serial)
+
+Before tty raw input, I build a keyboard input system around evdev.
+That's a lot less portable than tty raw input, and will probably be obsoleted somewhere in
+the future.
+Nevertheless, if you need this `make INPUT_EVDEV=true` should generate 3 binaries:
 
  - `build/vterm.xarm`: inkvt built for kobo.
     Sets up serial over USB and listens to `/dev/input/event*` and `/dev/ttyGS0` for evdev
