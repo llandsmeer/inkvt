@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <termios.h>
 #include <sys/signalfd.h>
 
 #include "setup_serial.hpp"
@@ -45,12 +46,15 @@ private:
     const int FD_EVDEV = 1;
     const int FD_SERIAL = 2;
     const int FD_PROGOUT = 3;
-    const int FD_SERVER = 3;
-    const int FD_SIGNAL = 4;
+    const int FD_SERVER = 4;
+    const int FD_SIGNAL = 5;
+    const int FD_STDIN = 6;
     int fdtype[128];
     struct pollfd fds[128];
     int nfds = 0;
     Server server;
+    bool should_reset_termios = 0;
+    struct termios termios_reset = { 0 };
 
     struct {
         int x;
@@ -127,6 +131,14 @@ private:
         exit(EXIT_SUCCESS);
         raise(SIGTERM);
     }
+
+    void handle_stdin(Buffers & buffers, int fd) {
+        char c;
+        while(read(fd, &c, 1) == 1) {
+            buffers.keyboard.push_back(c);
+        }
+    }
+
 public:
     void wait(Buffers & buffers) {
         poll(fds, nfds, -1);
@@ -147,8 +159,12 @@ public:
             if (fdtype[i] == FD_SIGNAL) {
                 handle_signal(buffers, fds[i].fd);
             }
+            if (fdtype[i] == FD_STDIN) {
+                handle_stdin(buffers, fds[i].fd);
+            }
         }
     }
+
     void add_evdev() {
         struct dirent **namelist;
         int ndev = scandir("/dev/input", &namelist, &_is_event_device, alphasort);
@@ -170,12 +186,24 @@ public:
             fds[nfds++].fd = fd;
         }
     }
+
     void add_progout(int fd) {
         fdtype[nfds] = FD_PROGOUT;
         fds[nfds].events = POLLIN;
         fds[nfds++].fd = fd;
     }
+
     void add_serial() {
+#ifdef TARGET_KOBO
+        // NOTE: Obviously highly platform-specific ;).
+        //       See http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Kobo_Hacks/KoboStuff/src/usr/local/stuff/bin/usbnet-toggle.sh for a slightly more portable example.
+        // NOTE: Extra fun fact: I don't know when Kobo started shipping g_serial, but they didn't on Mk.5, so, here's one I just built to test on my H2O:
+        //       http://files.ak-team.com/niluje/mrpub/Other/USBSerial-Kobo-Mk5-H2O.tar.gz
+        system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
+        system("insmod /drivers/mx6sll-ntx/usb/gadget/libcomposite.ko");
+        system("insmod /drivers/mx6sll-ntx/usb/gadget/u_serial.ko");
+        system("insmod /drivers/mx6sll-ntx/usb/gadget/usb_f_acm.ko");
+        system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
         int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
         if (fd != -1) {
             fdtype[nfds] = FD_SERIAL;
@@ -186,12 +214,29 @@ public:
         } else {
             printf("couldn't open /dev/ttyGS0\n");
         }
+#else
+        puts("add_serial() is only supported on kobo devices");
+#endif
     }
 
     void add_http(int port) {
         server.setup(port);
         fdtype[nfds] = FD_SERVER;
         fds[nfds++] = server.get_pollfd();
+    }
+
+    void add_ttyraw() {
+        should_reset_termios = 1;
+        tcgetattr(STDIN_FILENO, &termios_reset);
+        struct termios raw = termios_reset;
+        raw.c_lflag &= ~(ECHO | ICANON);
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+        int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+        fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+        fdtype[nfds] = FD_STDIN;
+        fds[nfds].events = POLLIN;
+        fds[nfds].revents = 0;
+        fds[nfds++].fd = STDIN_FILENO;
     }
 
     void add_signals(std::vector<int> signals) {
@@ -220,6 +265,10 @@ public:
 
     void add_signals() {
         add_signals({SIGINT, SIGQUIT});
+    }
+
+    void atexit() {
+        tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios_reset);
     }
 
 };

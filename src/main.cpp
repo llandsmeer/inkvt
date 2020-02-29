@@ -32,30 +32,22 @@ PseudoTTY pty;
 VTermToFBInk vterm;
 KeycodeTranslation keytrans;
 
-// NOTE: Obviously highly platform-specific ;).
-//       See http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Kobo_Hacks/KoboStuff/src/usr/local/stuff/bin/usbnet-toggle.sh for a slightly more portable example.
-// NOTE: Extra fun fact: I don't know when Kobo started shipping g_serial, but they didn't on Mk.5, so, here's one I just built to test on my H2O:
-//       http://files.ak-team.com/niluje/mrpub/Other/USBSerial-Kobo-Mk5-H2O.tar.gz
-static void setup_drivers() {
-#ifdef TARGET_KOBO
-    system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
-    system("insmod /drivers/mx6sll-ntx/usb/gadget/libcomposite.ko");
-    system("insmod /drivers/mx6sll-ntx/usb/gadget/u_serial.ko");
-    system("insmod /drivers/mx6sll-ntx/usb/gadget/usb_f_acm.ko");
-    system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
-#endif
+void handle_atexit() {
+    puts("atexit_called");
+    inputs.atexit();
 }
 
 int main() {
-    setup_drivers();
     Buffers buffers;
     pty.setup();
     vterm.setup();
-    inputs.add_http(7800);
     inputs.add_progout(pty.master);
-    inputs.add_evdev();
-    inputs.add_serial();
+    // inputs.add_evdev();
+    // inputs.add_serial();
     inputs.add_signals();
+    inputs.add_ttyraw();
+    inputs.add_http(7800);
+    atexit(handle_atexit);
     pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
     const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n";
     for (size_t i = 0; i < sizeof(header); i++) {
@@ -108,7 +100,6 @@ int main() {
             int c = buffers.prog_stdout.front();
             buffers.prog_stdout.pop_front();
             buffers.vt100_in.push_back(c);
-            if (c == 'q') break;
         }
     }
 }
