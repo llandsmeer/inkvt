@@ -51,8 +51,10 @@ int main() {
     Buffers buffers;
     pty.setup();
     vterm.setup();
-    inputs.setup();
+    inputs.add_http(7800);
     inputs.add_progout(pty.master);
+    inputs.add_evdev();
+    inputs.add_serial();
     pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
     const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n";
     for (size_t i = 0; i < sizeof(header); i++) {
@@ -98,6 +100,7 @@ int main() {
         }
         while (buffers.vt100_in.size() > 0) {
             int c = buffers.vt100_in.front();
+            printf("%c", c);
             buffers.vt100_in.pop_front();
             vterm.write(c);
         }

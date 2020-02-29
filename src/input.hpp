@@ -31,8 +31,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "./setup_serial.hpp"
-#include "./buffers.hpp"
+#include "setup_serial.hpp"
+#include "buffers.hpp"
+#include "insecure_http.hpp"
 
 static int _is_event_device(const struct dirent *dir) {
     return strncmp("event", dir->d_name, 5) == 0;
@@ -43,48 +44,17 @@ private:
     const int FD_EVDEV = 1;
     const int FD_SERIAL = 2;
     const int FD_PROGOUT = 3;
+    const int FD_SERVER = 3;
     int fdtype[64];
     struct pollfd fds[64];
     int nfds = 0;
+    Server server;
 
     struct {
         int x;
         int y;
         int moved;
     } istate;
-
-    void _setup() {
-        struct dirent **namelist;
-        int ndev = scandir("/dev/input", &namelist, &_is_event_device, alphasort);
-        for (int i = 0; i < ndev; i++) {
-            char fname[512];
-            snprintf(fname, sizeof(fname), "/dev/input/%s", namelist[i]->d_name);
-            int fd = open(fname, O_RDONLY, O_NONBLOCK);
-            if (fd == -1) {
-                printf("couldn't open %s %d\n", fname, fd);
-                continue;
-            }
-            if (0 && !ioctl(fd, EVIOCGRAB, (void*)1)) {
-                close(fd);
-                continue;
-            }
-            printf("opened %s\n", fname);
-            fdtype[nfds] = FD_EVDEV;
-            fds[nfds++].fd = fd;
-        }
-        int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
-        if (fd != -1) {
-            fdtype[nfds] = FD_SERIAL;
-            fds[nfds++].fd = fd;
-            printf("opening /dev/ttyGS0");
-            //setup_serial(fd);
-        } else {
-            printf("couldn't open /dev/ttyGS0\n");
-        }
-        for (int i = 0; i < nfds; i++) {
-            fds[i].events = POLLIN;
-        }
-    }
 
     void handle_evdev(Buffers & buffers, struct input_event ev) {
         int handled = 1;
@@ -141,12 +111,14 @@ private:
             buffers.prog_stdout.push_back(c);
         }
     }
-public:
-    void setup() {
-        _setup();
+
+    void handle_server(Buffers & buffers, int fd) {
+        if (fd != server.fd) return;
+        server.accept(buffers.keyboard);
     }
+public:
     void wait(Buffers & buffers) {
-        ppoll(fds, nfds, 0, 0);
+        poll(fds, nfds, -1);
         for (int i = 0; i < nfds; i++) {
             if (!fds[i].revents) continue;
             if (fdtype[i] == FD_EVDEV) {
@@ -158,11 +130,54 @@ public:
             if (fdtype[i] == FD_PROGOUT) {
                 handle_progout(buffers, fds[i].fd);
             }
+            if (fdtype[i] == FD_SERVER) {
+                handle_server(buffers, fds[i].fd);
+            }
+        }
+    }
+    void add_evdev() {
+        struct dirent **namelist;
+        int ndev = scandir("/dev/input", &namelist, &_is_event_device, alphasort);
+        for (int i = 0; i < ndev; i++) {
+            char fname[512];
+            snprintf(fname, sizeof(fname), "/dev/input/%s", namelist[i]->d_name);
+            int fd = open(fname, O_RDONLY, O_NONBLOCK);
+            if (fd == -1) {
+                printf("couldn't open %s %d\n", fname, fd);
+                continue;
+            }
+            if (0 && !ioctl(fd, EVIOCGRAB, (void*)1)) {
+                close(fd);
+                continue;
+            }
+            printf("opened %s\n", fname);
+            fdtype[nfds] = FD_EVDEV;
+            fds[nfds++].fd = fd;
         }
     }
     void add_progout(int fd) {
         fdtype[nfds] = FD_PROGOUT;
         fds[nfds].events = POLLIN;
         fds[nfds++].fd = fd;
+    }
+    void add_serial() {
+        int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
+        if (fd != -1) {
+            fdtype[nfds] = FD_SERIAL;
+            fds[nfds++].fd = fd;
+            printf("opening /dev/ttyGS0");
+            //setup_serial(fd);
+        } else {
+            printf("couldn't open /dev/ttyGS0\n");
+        }
+        for (int i = 0; i < nfds; i++) {
+            fds[i].events = POLLIN;
+        }
+    }
+
+    void add_http(int port) {
+        server.setup(port);
+        fdtype[nfds] = FD_SERVER;
+        fds[nfds++] = server.get_pollfd();
     }
 };

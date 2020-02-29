@@ -1,0 +1,34 @@
+<script>
+document.onkeydown = function (e) {
+    if (e.ctrlKey) { // handle ^W
+        var stopEvilCtrlW = function(e) {
+            e.preventDefault();
+            return "^W";
+        },  clearEvilCtrlW = function() {
+            window.removeEventListener('beforeunload', stopEvilCtrlW, false);
+        };
+        setTimeout(clearEvilCtrlW, 1000);
+        window.addEventListener('beforeunload', stopEvilCtrlW, false);
+    }
+    console.log(e);
+    key = e.key;
+    switch (key) {
+        case 'Enter':
+            key = '\n';
+            break;
+        case 'Escape':
+            key = '\x1b'
+            break;
+        case 'Shift':
+        case 'Control':
+            return;
+    }
+    fetch('http://localhost:7800/', {
+        method: 'POST',
+        body: key
+    }).then(res => {
+    })
+
+    return false;
+}
+</script>
