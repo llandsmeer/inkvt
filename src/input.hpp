@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/signalfd.h>
 
 #include "setup_serial.hpp"
 #include "buffers.hpp"
@@ -45,8 +46,9 @@ private:
     const int FD_SERIAL = 2;
     const int FD_PROGOUT = 3;
     const int FD_SERVER = 3;
-    int fdtype[64];
-    struct pollfd fds[64];
+    const int FD_SIGNAL = 4;
+    int fdtype[128];
+    struct pollfd fds[128];
     int nfds = 0;
     Server server;
 
@@ -116,6 +118,15 @@ private:
         if (fd != server.fd) return;
         server.accept(buffers.keyboard);
     }
+
+    void handle_signal(Buffers & buffers, int fd) {
+        struct signalfd_siginfo fdsi;
+        ssize_t s = read(fd, &fdsi, sizeof(struct signalfd_siginfo));
+        printf("Got signal %d, exiting now\n", fdsi.ssi_signo);
+        if (s != sizeof(fdsi)) return;
+        exit(EXIT_SUCCESS);
+        raise(SIGTERM);
+    }
 public:
     void wait(Buffers & buffers) {
         poll(fds, nfds, -1);
@@ -132,6 +143,9 @@ public:
             }
             if (fdtype[i] == FD_SERVER) {
                 handle_server(buffers, fds[i].fd);
+            }
+            if (fdtype[i] == FD_SIGNAL) {
+                handle_signal(buffers, fds[i].fd);
             }
         }
     }
@@ -152,6 +166,7 @@ public:
             }
             printf("opened %s\n", fname);
             fdtype[nfds] = FD_EVDEV;
+            fds[nfds].events = POLLIN;
             fds[nfds++].fd = fd;
         }
     }
@@ -164,14 +179,12 @@ public:
         int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
         if (fd != -1) {
             fdtype[nfds] = FD_SERIAL;
+            fds[nfds].events = POLLIN;
             fds[nfds++].fd = fd;
             printf("opening /dev/ttyGS0");
-            //setup_serial(fd);
+            setup_serial(fd);
         } else {
             printf("couldn't open /dev/ttyGS0\n");
-        }
-        for (int i = 0; i < nfds; i++) {
-            fds[i].events = POLLIN;
         }
     }
 
@@ -180,4 +193,33 @@ public:
         fdtype[nfds] = FD_SERVER;
         fds[nfds++] = server.get_pollfd();
     }
+
+    void add_signals(std::vector<int> signals) {
+        sigset_t mask = { 0 };
+        sigemptyset(&mask);
+        for (int signal : signals) {
+            if (sigaddset(&mask, signal) != 0) {
+                puts("sigaddset");
+                exit(1);
+            }
+        }
+        if (sigprocmask(SIG_BLOCK, &mask, 0) == -1) {
+            perror("sigprocmask");
+            exit(1);
+        }
+        int fd = signalfd(-1, &mask, 0);
+        if (fd == -1) {
+            perror("signalfd");
+            exit(1);
+        }
+        fdtype[nfds] = FD_SIGNAL;
+        fds[nfds].events = POLLIN;
+        fds[nfds].revents = 0;
+        fds[nfds++].fd = fd;
+    }
+
+    void add_signals() {
+        add_signals({SIGINT, SIGQUIT});
+    }
+
 };
