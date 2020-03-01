@@ -20,14 +20,18 @@ build/tracexec.x:
 
 linux: build/libfbink.a build/libvterm.a
 	python3 keymap.py > src/_keymap.hpp
-	g++ src/main.cpp -lvterm -lfbink -o build/vterm.x86 $(LDFLAGS) $(CPPFLAGS)
+	g++ src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS) $(CPPFLAGS)
+	strip -s build/inkvt.host
+	upx build/inkvt.host || echo "install UPX for smaller executables"
 ifeq ($(INPUT_EVDEV),"true")
 	g++ src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS) $(CPPFLAGS)
 endif
 
 kobo: build/libfbink_kobo.a build/libvterm_kobo.a
 	python3 keymap.py > src/_keymap.hpp
-	$(CROSS_TC)-g++ -static -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/vterm.xarm $(LDFLAGS) $(CPPFLAGS)
+	$(CROSS_TC)-g++ -static -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(CPPFLAGS)
+	$(CROSS_TC)-strip -s build/inkvt.armhf
+	upx build/inkvt.armhf || echo "install UPX for smaller executables"
 
 build/libvterm.a:
 	make -f Makevterm clean
