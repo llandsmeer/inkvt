@@ -38,7 +38,14 @@
 #define server_try(x) (err = (x), (err < 0? \
         (printf("ERROR: " #x " = %ld (errno = %s)\n", err, strerror(errno)), exit(1)) : (void)0), err)
 
-struct Server {
+class Server {
+    int hexdigit(char c) {
+        if (c >= '0' && c <= '9') return c - '0';
+        if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+        if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+        return 0;
+    }
+public:
     int fd = -1;
     int port = -1;
     struct sockaddr_in address;
@@ -91,9 +98,10 @@ struct Server {
         while (std::getline(ss, header)) {
             if (header.length() == 1) break;
         }
-        char c;
-        while (ss >> c) {
-            output.push_back(c);
+        char c1;
+        char c2;
+        while ((ss >> c1) && (ss >> c2)) {
+            output.push_back((hexdigit(c1)<<4) | hexdigit(c2));
         }
         send(clientfd, response , sizeof(response)-1 , 0 );
         close(clientfd);
