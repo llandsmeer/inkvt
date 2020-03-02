@@ -42,6 +42,8 @@ static int _is_event_device(const struct dirent *dir) {
 }
 
 class Inputs {
+public:
+    Server server;
 private:
     const int FD_EVDEV = 1;
     const int FD_SERIAL = 2;
@@ -52,7 +54,6 @@ private:
     int fdtype[128];
     struct pollfd fds[128];
     int nfds = 0;
-    Server server;
     bool should_reset_termios = 0;
     struct termios termios_reset = { 0 };
 
@@ -238,6 +239,10 @@ public:
         server.setup(port);
         fdtype[nfds] = FD_SERVER;
         fds[nfds++] = server.get_pollfd();
+    }
+
+    bool is_listening_on_http() {
+        return server.fd != -1;
     }
 
     void add_ttyraw() {

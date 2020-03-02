@@ -24,9 +24,10 @@
 #include <stdio.h> 
 #include <errno.h>
 #include <sys/socket.h> 
+#include <string.h> 
 #include <stdlib.h> 
 #include <netinet/in.h> 
-#include <string.h> 
+#include <net/if.h>
 
 #include <vector>
 #include <sstream>
@@ -38,8 +39,10 @@
         (printf("ERROR: " #x " = %ld (errno = %s)\n", err, strerror(errno)), exit(1)) : (void)0), err)
 
 struct Server {
-    int fd;
+    int fd = -1;
+    int port = -1;
     struct sockaddr_in address;
+    struct ifreq ifr;
 
     struct pollfd get_pollfd() {
         pollfd ret;
@@ -61,6 +64,7 @@ struct Server {
         server_try(listen(fd, 3));
         int flags = server_try(fcntl(fd, F_GETFL, 0));
         fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+        this->port = port;
     }
 
     void accept(std::deque<char> & output) {

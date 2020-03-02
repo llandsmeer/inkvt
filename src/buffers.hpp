@@ -12,5 +12,5 @@ struct Buffers {
     std::deque<char> serial;
 #endif
     std::deque<char> keyboard;
-    std::deque<int> vt100_in;
+    std::deque<char> vt100_in;
 };

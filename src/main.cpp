@@ -16,6 +16,10 @@
  */
 
 #include <stdlib.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <ifaddrs.h>
 
 #include "./netev.hpp"
 #include "./input.hpp"
@@ -38,6 +42,39 @@ void handle_atexit() {
     inputs.atexit();
 }
 
+void deque_printf(std::deque<char> & out, const char * fmt, ...) {
+    char result[1024];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(result, sizeof(result), fmt, ap);
+    for (char * c = result; *c; c++) {
+        out.push_back(*c);
+    }
+    va_end(ap);
+}
+
+void print_listen_adresses(Buffers & buffers) {
+    struct ifaddrs *ifaddr, *ifa;
+    int family, s;
+    char host[NI_MAXHOST];
+    deque_printf(buffers.vt100_in, "listening on:\r\n");
+    if (getifaddrs(&ifaddr) == -1) {
+        perror("getifaddrs");
+        deque_printf(buffers.vt100_in, "    ... could not call getifaddres()\r\n");
+        return;
+    }
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr)
+            continue;
+        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+        if (s == 0 && ifa->ifa_addr->sa_family == AF_INET) {
+            deque_printf(buffers.vt100_in, "  - %s:%d (%s)\r\n",
+                    host, inputs.server.port, ifa->ifa_name);
+        }
+    }
+    freeifaddrs(ifaddr);
+}
+
 int main() {
     Buffers buffers;
     pty.setup();
@@ -53,9 +90,9 @@ int main() {
     inputs.add_http(7800);
     atexit(handle_atexit);
     pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
-    const char header[] = "inkvt\r\nversion " GITHASH "\r\n\r\n";
-    for (size_t i = 0; i < sizeof(header); i++) {
-        buffers.vt100_in.push_back(header[i]);
+    deque_printf(buffers.vt100_in, "inkvt\r\nversion %s\r\n", GITHASH);
+    if (inputs.is_listening_on_http()) {
+        print_listen_adresses(buffers);
     }
     for (;;) {
         inputs.wait(buffers);
