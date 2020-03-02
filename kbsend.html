@@ -1,5 +1,48 @@
+Ip: <input id=ip></input></br>
+Port: <input id=port value=7800></input></br>
+Mobile: <input autofocus id=free></input></br>
+
+<div id=out>
+</div>
+
+<style>
+kbd {
+    background-color: #eee;
+    border-radius: 3px;
+    border: 1px solid #b4b4b4;
+    color: #333;
+    display: inline-block;
+    padding: 2px 4px;
+    margin: 0px 1px;
+    white-space: nowrap;
+}
+</style>
+
 <script>
+var elemout = document.getElementById('out')
+var elemip = document.getElementById('ip')
+var elemport = document.getElementById('port')
+
+if (localStorage.getItem('ip')) {
+    elemip.value = localStorage.getItem('ip')
+} else {
+    elemip.value = '127.0.0.1'
+}
+
+ip.oninput = function(e) {
+    localStorage.setItem('ip', elemip.value)
+}
+
+function log(x) {
+    var keynode = document.createElement('kbd')
+    keynode.innerText = String(x).replace(' ', '_')
+    elemout.appendChild(keynode)
+}
+
 document.onkeydown = function (e) {
+    if (e.target == elemport || e.target == elemip) {
+        return;
+    }
     if (e.ctrlKey) { // handle ^W
         var stopEvilCtrlW = function(e) {
             e.preventDefault();
@@ -10,8 +53,8 @@ document.onkeydown = function (e) {
         setTimeout(clearEvilCtrlW, 1000);
         window.addEventListener('beforeunload', stopEvilCtrlW, false);
     }
-    console.log(e);
-    key = e.key;
+    key = e.key
+    log(key)
     switch (key) {
         case 'Enter':
             key = '\n';
@@ -23,11 +66,16 @@ document.onkeydown = function (e) {
         case 'Control':
             return;
     }
-    var host = '192.168.43.78'
+    var host = elemip.value
     fetch('http://' + host + ':7800/', {
         method: 'POST',
         body: key
     }).then(res => {
+        return res.text()
+    }).then(text => {
+        log(text)
+    }).catch(e => {
+        log(e)
     })
 
     return false;
