@@ -112,7 +112,7 @@ private:
     }
 
     void handle_progout(Buffers & buffers, int fd) {
-        char buf[1024];
+        char buf[64];
         int nread = read(fd, buf, sizeof(buf));
         if (nread < 0) return;
         for (int i = 0; i < nread; i++) {
@@ -132,10 +132,14 @@ private:
     void handle_signal(Buffers & buffers, int fd) {
         struct signalfd_siginfo fdsi;
         ssize_t s = read(fd, &fdsi, sizeof(struct signalfd_siginfo));
-        printf("Got signal %d, exiting now\n", fdsi.ssi_signo);
         if (s != sizeof(fdsi)) return;
-        exit(EXIT_SUCCESS);
-        raise(SIGTERM);
+        if (fdsi.ssi_signo == SIGINT) {
+            buffers.keyboard.push_back(0x03);
+        } else {
+            printf("Got signal %d, exiting now\n", fdsi.ssi_signo);
+            exit(EXIT_SUCCESS);
+            raise(SIGTERM);
+        }
     }
 
     void handle_stdin(Buffers & buffers, int fd) {
