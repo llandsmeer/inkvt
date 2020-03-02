@@ -21,14 +21,16 @@ public:
 
     void update_fg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-#define BG(x) (127 + (x)/2)
-        fbink_set_bg_pen_rgba(BG(c->rgb.red), BG(c->rgb.green), BG(c->rgb.blue), 0xFFu, false, true);
-#undef BG
+#define FG(x) ((255-x) / 2)
+#define BG(x) (255-x)
+        fbink_set_fg_pen_rgba(FG(c->rgb.red), FG(c->rgb.green), FG(c->rgb.blue), 0xFFu, false, true);
     }
 
     void update_bg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-        fbink_set_fg_pen_rgba(c->rgb.red, c->rgb.green, c->rgb.blue, 0xFFu, false, true);
+        fbink_set_bg_pen_rgba(BG(c->rgb.red), BG(c->rgb.green), BG(c->rgb.blue), 0xFFu, false, true);
+#undef BG
+#undef FG
     }
 
     void output_char(const char c) {
