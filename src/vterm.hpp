@@ -33,9 +33,16 @@ public:
 #undef FG
     }
 
-    void output_char(const char c) {
-        char buf[2] = {c, 0};
-        if (c == 0) {
+    void output_char(const VTermPos & pos) {
+        VTermRect rect;
+        rect.start_row = pos.row;
+        rect.start_col = pos.col;
+        rect.end_col = pos.col + 1;
+        rect.end_row = pos.row + 1;
+        char buf[32];
+        size_t nread = vterm_screen_get_text(screen, buf, sizeof(buf)-1, rect);
+        buf[nread] = 0;
+        if (nread == 0) {
             fbink_grid_clear(fbfd, 1U, 1U, &config);
         } else {
             fbink_print(fbfd, buf, &config);
@@ -67,7 +74,7 @@ public:
                 // if (cell.attrs.reverse) me->config->is_inverted = !me->config->is_inverted;
                 me->update_fg_color(&cell.fg);
                 me->update_bg_color(&cell.bg);
-                me->output_char(cell.chars[0]);
+                me->output_char(pos);
             }
         }
 
@@ -90,7 +97,7 @@ public:
         me->config.row = old.row;
         me->update_fg_color(&cell.fg);
         me->update_bg_color(&cell.bg);
-        me->output_char(cell.chars[0]);
+        me->output_char(old);
 
         // add new cursor
         vterm_screen_get_cell(me->screen, pos, &cell);
@@ -98,7 +105,7 @@ public:
         me->config.row = pos.row;
         me->update_fg_color(&cell.bg); // NOTE: fb and bg inverted
         me->update_bg_color(&cell.fg); // for color inversion
-        me->output_char(cell.chars[0]);
+        me->output_char(pos);
         return 1;
     }
 
@@ -163,6 +170,7 @@ public:
             .sb_popline = 0
         };
         term = vterm_new(state.max_rows, state.max_cols);
+        vterm_set_utf8(term, 1);
         screen = vterm_obtain_screen(term);
         vterm_screen_set_callbacks(screen, &vtsc, this);
         vterm_screen_enable_altscreen(screen, 1);
