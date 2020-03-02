@@ -2,6 +2,7 @@
 
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
+#include<iostream>
 
 class VTermToFBInk {
 public:
@@ -107,24 +108,21 @@ public:
     static int term_moverect(VTermRect dst, VTermRect src, void * user) {
         term_damage(dst, user);
         return 1;
-        // this should work I thing but doesnt:
-        // preferable, a direct copy will be better
-        // but something that works is also nice
         /*
+        // 'more effcient memcpy implementation':
+        // This work sort of but is very buggy. Especially because the linux
+        // console still likes to overwrite some parts of the screen...
         VTermToFBInk * me = (VTermToFBInk*)user;
-        short int x_off, y_off;
         unsigned short int w, h;
-        x_off = me->state.glyph_width*src.start_row;
-        y_off = me->state.glyph_height*src.start_col;
-        w = me->state.glyph_width*(src.end_row - src.start_row + 1);
-        h = me->state.glyph_height*(src.end_col - src.start_col + 1);
-        if (h > 100) h = 100;
-        if (w > 100) w = 100;
-        fbink_region_dump(me->fbfd, x_off, y_off, w, h, &me->config, &me->dump);
-        me->dump.area.top = me->state.glyph_width*dst.start_row;
-        me->dump.area.left = me->state.glyph_height*dst.start_col;
-        fbink_restore(me->fbfd, &me->config, &me->dump);
-        // fbink_free_dump_data(&me->dump);
+        w = me->state.glyph_width*(src.end_col - src.start_col);
+        h = me->state.glyph_height*(src.end_row - src.start_row);
+        me->config.col = src.start_col;
+        me->config.row = src.start_row;
+        fbink_region_dump(me->fbfd, 0, 0, w, h, &me->config, &me->dump);
+        me->config.col = dst.start_col;
+        me->config.row = dst.start_row;
+        fbink_print_raw_data(me->fbfd, me->dump.data,
+                w, h, me->dump.size, 0, 0, &me->config);
         return 1;
         */
     }
