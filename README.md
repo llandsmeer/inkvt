@@ -64,31 +64,17 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 
 # Todo
 
- - I just got really strange errors about wrong `GLIBCXX_3.4` versions? I fixed it with `-static`
-   but now the binary is 13Mb. I think its due to std::allocator via std::string/std::stringstream?
- - Implement `vterm` callback `moverect`
- - Implement `vterm` callback `movecursor`
  - Make it runnable from KFMon and KOReader. I'm thinking, reading `/proc/*/fd` for processes
    that are reading `/dev/input/event*`, `SIGSTOP`-ing them and using `tracexec` to
    ungrab and drain their evdev devices. Or maybe even temporary close the file.
    This would also mean that I have to catch all signals/segv and handle them gracefully.
    Or just copy the setup scripts from KOReader.
  - Add hideable touchscreen keyboard / settings bar
- - Lock: detect if inkvt is already running and fail if so.
-   Executing `evdev2serial` and then running `./vterm.xarm` usually results in inkvt
-   starting twice, because the keypresses that start it are also send to inkvt over serial...
- - Get Ctrl-<KEY> escape sequences working for keys other than standard printable ascii.
-   [This](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html) might be of help.
- - Connect an actual hardware keyboard. Simplest solution would be putting a Raspberry Pi between
-   the keyboard and kobo and running `build/evdev2serial.x86`, compiled on the Raspberry I think.
- - Detect `pty(7)` slave `sh` exit.
- - Disable stdin printing while `build/vterm.x86` runs. Probably just `noecho`.
-   Currently linux console and inkvt fight over the framebuffer.
-   Maybe limit stdout/stderr too/move printfs to something that that be configured
-   to output to the framebuffer.
- - Handle screen rotation
+ - Connect an actual hardware keyboard.
  - Implement `vterm` callback `settermprop`
- - Switch to vectorized font. Preferable something typewriter like. And include the
+ - Far future: switch to vectorized font. Only for ligatures :).
+   Terminus is fine for now.
+   Preferable something typewriter like. And include the
    file as a raw file in the output binary s.t. everything stays in 1 file.
 
 # Tracexec
