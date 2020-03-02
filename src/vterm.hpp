@@ -140,7 +140,11 @@ public:
             exit(1);
         }
         config.fontname = FONT_INDEX_E::TERMINUS;
+#ifdef TARGET_KOBO
         config.fontmult = 3;
+#else
+        config.fontmult = 1;
+#endif
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
