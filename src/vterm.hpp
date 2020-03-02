@@ -3,11 +3,6 @@
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
 
-
-extern "C" {
-    extern bool g_isQuiet;
-}
-
 class VTermToFBInk {
 public:
     VTerm * term;
@@ -157,7 +152,8 @@ public:
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
-        g_isQuiet = 1; // couldn't get config.quiet to work
+        config.is_quiet = 1;
+        fbink_update_verbosity(&config);
 
         vtsc = (VTermScreenCallbacks){
             .damage = VTermToFBInk::term_damage,
