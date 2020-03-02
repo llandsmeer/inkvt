@@ -63,9 +63,9 @@ struct Server {
         fcntl(fd, F_SETFL, flags | O_NONBLOCK);
     }
 
-    void accept(std::deque<char> output) {
+    void accept(std::deque<char> & output) {
         // blocking read
-        char response[] = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n\r\nok.";
+        char response[] = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n\r\nok.\n";
         char buffer[1024] = {0};
         int clientfd;
         int addrlen = sizeof(address);
