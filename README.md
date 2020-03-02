@@ -34,7 +34,7 @@ $ make
 [...]
 ```
 
-Which generates 2 binaries: `build/vterm.xarm` and `build/vterm.x86`.
+Which generates 2 binaries: `build/inkvt.armhf` and `build/inkvt.host`.
 The first one targets the kobo, the second one the host's linux.
 If you want to try this on a desktop linux, run it outside
 X/Wayland using <kbd>Ctrl+Alt+F3</kbd>.
@@ -52,26 +52,25 @@ That's a lot less portable than tty raw input, and will probably be obsoleted so
 the future.
 Nevertheless, if you need this `make INPUT_EVDEV=true` should generate 3 binaries:
 
- - `build/vterm.xarm`: inkvt built for kobo.
+ - `build/inkvt.armhf`: inkvt built for kobo.
     Sets up serial over USB and listens to `/dev/input/event*` and `/dev/ttyGS0` for evdev
     input.
  - `build/evdev2serial.x86`: listens to evdev devices and send `EV_KEY` events to `/dev/ttyACM0`.
- - `build/vterm.x86`: inkvt built for linux framebuffer (for development). Listens to `/dev/input/event*`.
+ - `build/inkvt.host`: inkvt built for linux framebuffer (for development). Listens to `/dev/input/event*`.
     Only usable from linux console (eg. <kbd>Ctrl+Super+F3</kbd>).
 
-So to run, copy `./build/vterm.xarm` to `/mnt/onboard`, SSH into the Kobo device and run `./vterm.xarm`.
+So to run, copy `./build/inkvt.armhf` to `/mnt/onboard`, SSH into the Kobo device and run `./inkvt.armhf`.
 Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 
 # Todo
 
+ - Connect an actual hardware keyboard.
  - Make it runnable from KFMon and KOReader. I'm thinking, reading `/proc/*/fd` for processes
    that are reading `/dev/input/event*`, `SIGSTOP`-ing them and using `tracexec` to
    ungrab and drain their evdev devices. Or maybe even temporary close the file.
    This would also mean that I have to catch all signals/segv and handle them gracefully.
    Or just copy the setup scripts from KOReader.
  - Add hideable touchscreen keyboard / settings bar
- - Connect an actual hardware keyboard.
- - Implement `vterm` callback `settermprop`
  - Far future: switch to vectorized font. Only for ligatures :).
    Terminus is fine for now.
    Preferable something typewriter like. And include the
