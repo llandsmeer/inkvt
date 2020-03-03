@@ -33,7 +33,11 @@
 #include <sstream>
 #include <deque>
 
-#define PORT 8080 
+#include "_kbsend.hpp"
+
+#ifndef GITHASH
+#define GITHASH "<unknown>"
+#endif
 
 #define server_try(x) (err = (x), (err < 0? \
         (printf("ERROR: " #x " = %ld (errno = %s)\n", err, strerror(errno)), exit(1)) : (void)0), err)
@@ -76,7 +80,12 @@ public:
 
     void accept(std::deque<char> & output) {
         // blocking read
-        char response[] = "HTTP/1.1 200 OK\r\nAccess-Control-Allow-Origin: *\r\n\r\nok.\n";
+        static char response_headers[] =
+            "HTTP/1.1 200 OK\r\n"
+            "Access-Control-Allow-Origin: *\r\n"
+            "Content-Type: text/html; charset=UTF-8\r\n"
+            "Connection: close\r\n"
+            "\r\n";
         char buffer[1024] = {0};
         int clientfd;
         int addrlen = sizeof(address);
@@ -95,16 +104,30 @@ public:
         ss.write(buffer, nread);
         std::string header;
         buffer[nread] = 0;
+        bool is_post = false;
+        if (std::getline(ss, header)) {
+            if (header.rfind("POST", 0) == 0) {
+                is_post = true;
+            }
+        }
         while (std::getline(ss, header)) {
+            /* HTTP header/body separator is \r\n\r\n
+             * "\r\n".length() with \n removed is 1 */
             if (header.length() == 1) break;
         }
-        char c1;
-        char c2;
-        while ((ss >> c1) && (ss >> c2)) {
-            output.push_back((hexdigit(c1)<<4) | hexdigit(c2));
+        if (is_post) {
+            char c1;
+            char c2;
+            while ((ss >> c1) && (ss >> c2)) {
+                output.push_back((hexdigit(c1)<<4) | hexdigit(c2));
+            }
+            static char ok[] = "ok.\n";
+            send(clientfd, response_headers , sizeof(response_headers)-1 , 0);
+            send(clientfd, ok , sizeof(ok)-1 , 0);
+        } else {
+            send(clientfd, response_headers , sizeof(response_headers)-1 , 0);
+            send(clientfd, src_kbsend_html, src_kbsend_html_len, 0);
         }
-        send(clientfd, response , sizeof(response)-1 , 0 );
         close(clientfd);
     }
-
 };

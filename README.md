@@ -42,12 +42,14 @@ X/Wayland using <kbd>Ctrl+Alt+F3</kbd>.
 To send keyboard input, there are 3 options:
  - `screen /dev/ttyACM0 9600` (this requires firmware version 7 and Kobo Libra H2O or similar hardware):
  - if you started inkvt from ssh, stdin
- - by sending keyboard input with a http post request to port 7800.
-   ~~I'm hosting [kbsend.html here](https://blog.llandsmeer.com/kbsend.html) if you want to
-   try to use it on you phone with an OTG keyboard.
+ - By sending keyboard input with a http post request to port 7800.
+   If you move your browser to the ip adress where inkvt is listening (`127.0.0.1:7800` for
+   a local test), you'll end up with a webpage where you can send text to inkvt.
+   The idea is that you can use a phone with an OTG keyboard.
    It requires that you're on the same (wifi) network, so for example, the builtin
    phone hotspot or a common wifi router.
-   Only tested for the linux version currently.~~
+   Only tested for the linux version currently.
+   Also, android keyinput is extremely buggy...
 
 # Alternative input method (evdev & evdev over serial)
 

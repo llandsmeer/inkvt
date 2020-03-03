@@ -1,6 +1,8 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 Ip: <input id=ip></input></br>
 Port: <input id=port value=7800></input></br>
-Mobile: <input autofocus id=free></input></br>
+Mobile: <input autocapitalize=none id=mobile autofocus></input></br>
 
 <div id=out>
 </div>
@@ -22,11 +24,12 @@ kbd {
 var elemout = document.getElementById('out')
 var elemip = document.getElementById('ip')
 var elemport = document.getElementById('port')
+var elemmobile = document.getElementById('mobile')
 
 if (localStorage.getItem('ip')) {
     elemip.value = localStorage.getItem('ip')
 } else {
-    elemip.value = '127.0.0.1'
+    elemip.value = window.location.hostname;
 }
 
 ip.oninput = function(e) {
@@ -54,8 +57,9 @@ function toHex(str,hex){
   return hex
 }
 
-document.onkeydown = function (e) {
+function process(e) {
     if (e.target == elemport || e.target == elemip) {
+        log('wrong target')
         return;
     }
     if (e.ctrlKey) { // handle ^W
@@ -73,6 +77,8 @@ document.onkeydown = function (e) {
         var code = key.charCodeAt(0) & (0x20-1)
         key = String.fromCharCode(code)
     }
+    // if (e.keyCode == 8 || e.charCode == 8) key = 'Backspace' // more android..
+    // if (e.keyCode == 46 || e.charCode == 46) key = 'Delete'
     switch (key) {
         case 'Enter':
             key = '\n';
@@ -83,8 +89,17 @@ document.onkeydown = function (e) {
         case 'Shift':
         case 'Control':
             return;
+        case 'Backspace':
+            key = '\x7f'
+            break;
     }
+    send_key(key)
+    return false;
+}
+
+function send_key(key) {
     var body = toHex(key)
+    log(body)
     var host = elemip.value
     var port = elemport.value
     fetch('http://' + host + ':' + port + '/', {
@@ -96,7 +111,40 @@ document.onkeydown = function (e) {
     }).catch(e => {
         log(e)
     })
+}
 
-    return false;
+document.onkeydown = function (e) {
+    if (e.key == 'Process') {
+        // android....
+        var last;
+        log('Got Process...')
+        elemmobile.onkeyup = function (e) {
+            if (['Enter', 'Backspace', 'Delete', ' '].indexOf(e.key) != -1) {
+                // enter, space etc..
+                if (e.key == 'Process') return; // android...
+                log('onkeyup')
+                last = e.which;
+                process(e)
+            }
+        }
+        function oninput(e) {
+            // printable keys
+            log('oninput')
+            if (elemmobile.value.length > 0 && elemmobile.value != ' ') {
+                send_key(elemmobile.value)
+            }
+            log(e.dataTransfer)
+            log(e.inputType)
+            elemmobile.oninput = null
+            elemmobile.value = ''
+            elemmobile.oninput = oninput
+            e.preventDefault();
+            return false;
+        }
+        elemmobile.oninput = oninput
+        document.onkeydown = null
+    } else {
+        process(e)
+    }
 }
 </script>

@@ -18,7 +18,10 @@ build/tracexec.x:
 	gcc src/tracexec.c -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tracexec.x86
 	$(CROSS_TC)-gcc src/tracexec.c -Wall -falign-labels=8 -Wno-unused-value -o build/tracexec.x
 
-linux: build/libfbink.a build/libvterm.a
+src/_kbsend.hpp: src/kbsend.html
+	xxd -i src/kbsend.html > src/_kbsend.hpp || echo "install xxd to update src/_kbsend.hpp"
+
+linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	g++ src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS) $(CPPFLAGS)
 	strip -s build/inkvt.host
@@ -27,7 +30,7 @@ ifeq ($(INPUT_EVDEV),"true")
 	g++ src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS) $(CPPFLAGS)
 endif
 
-kobo: build/libfbink_kobo.a build/libvterm_kobo.a
+kobo: build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	$(CROSS_TC)-g++ -static -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(CPPFLAGS)
 	$(CROSS_TC)-strip -s build/inkvt.armhf
