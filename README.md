@@ -81,6 +81,8 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
    Terminus is fine for now.
    Preferable something typewriter like. And include the
    file as a raw file in the output binary s.t. everything stays in 1 file.
+ - Speed up text output when there is a lot of output. Like debounce to 10Hz screen
+   updates or skip scrolling/jump scrolling.
 
 # Tracexec
 
@@ -121,6 +123,23 @@ int main(int argc, char ** argv) {
 # Related projects:
 
  - [fbpad-eink](https://github.com/kisonecat/fbpad-eink)
+
+# Profiler
+
+Inkvt is currently slow for programs that generate a lot of
+output, like `cat LICENSE`. Here is some profiler result,
+maybe useful for me in the future.
+
+```
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total
+ time   seconds   seconds    calls  us/call  us/call  name
+ 51.90      3.29     3.29                             fill_rect
+ 15.17      4.25     0.96                             draw
+ 12.16      5.02     0.77    35915    21.44    26.42  VTermToFBInk::term_damage(VTermRect, void*)
+  4.42      5.30     0.28                             grid_to_region
+  4.34      5.57     0.28                             vterm_screen_get_cell
+```
 
 # License
 

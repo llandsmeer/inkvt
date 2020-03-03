@@ -4,7 +4,14 @@ CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabi
 
 CPPFLAGS += -Wall -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
 
-ifeq ($(INPUT_EVDEV),"true")
+ifeq ("$(DEBUG)","true")
+	CPPFLAGS += -g -pg
+else
+	CPPFLAGS += -O2
+endif
+
+
+ifeq ("$(INPUT_EVDEV)","true")
 	CPPFLAGS += -DINPUT_EVDEV
 endif
 
@@ -24,8 +31,9 @@ src/_kbsend.hpp: src/kbsend.html
 linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	g++ src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS) $(CPPFLAGS)
+ifneq ("$(DEBUG)","true")
 	strip -s build/inkvt.host
-	upx build/inkvt.host || echo "install UPX for smaller executables"
+endif
 ifeq ($(INPUT_EVDEV),"true")
 	g++ src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS) $(CPPFLAGS)
 endif

@@ -55,7 +55,7 @@ void deque_printf(std::deque<char> & out, const char * fmt, ...) {
 
 void print_listen_adresses(Buffers & buffers) {
     struct ifaddrs *ifaddr, *ifa;
-    int family, s;
+    int s;
     char host[NI_MAXHOST];
     deque_printf(buffers.vt100_in, "listening on:\r\n");
     if (getifaddrs(&ifaddr) == -1) {

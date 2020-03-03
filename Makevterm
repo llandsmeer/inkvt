@@ -7,6 +7,7 @@ ifdef CROSS_TC
 	STRIP:=$(CROSS_TC)-strip
 	AR:=$(CROSS_TC)-gcc-ar
 	RANLIB:=$(CROSS_TC)-gcc-ranlib
+	CFLAGS:= -O2
 endif
 
 ifdef NATIVE_TC

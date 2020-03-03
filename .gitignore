@@ -3,3 +3,5 @@ __pycache__/
 /build/
 /libvterm-0.1.3/src/*.o
 /ng/
+/analysis.txt
+/gmon.out

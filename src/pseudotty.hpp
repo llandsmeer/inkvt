@@ -21,11 +21,13 @@ public:
     struct termios tios;
 
     void write(const char * text) {
-        ::write(master, text, strlen(text));
+        int nwritten = ::write(master, text, strlen(text));
+        (void)nwritten;
     }
 
     void write(char c) {
-        ::write(master, &c, 1);
+        int nwritten = ::write(master, &c, 1);
+        (void)nwritten;
     }
 
     void set_size(int rows, int cols) {
