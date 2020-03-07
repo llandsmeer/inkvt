@@ -27,6 +27,7 @@
 #include "./vterm.hpp"
 #include "./_keymap.hpp"
 #include "./buffers.hpp"
+#include "./rivalapp.hpp"
 
 #ifndef GITHASH
 #define GITHASH "<unknown>"
@@ -36,10 +37,26 @@ Inputs inputs;
 PseudoTTY pty;
 VTermToFBInk vterm;
 KeycodeTranslation keytrans;
+#if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
+// WARNING: Enabling this is VERY experimental
+// I tried to use tracexec (simpler case) on my kobo
+// and it failed. I think I have to rewrite some of the
+// arm specific syscall handing code...
+// RivalApps: Starve nickle, koreader or anything reading
+// from /dev/input/event{0,1,2} from input and SIGSTOP them
+// Problem: we ungrab their evdev devices, but don't know
+// which ones to give back, so we grab none for them
+std::vector<RivalApp> rivalapps;
+#endif
 
 void handle_atexit() {
     puts("atexit_called");
     inputs.atexit();
+#if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
+    for (RivalApp & rivalapp : rivalapps) {
+        rivalapp.give_back_control();
+    }
+#endif
 }
 
 void deque_printf(std::deque<char> & out, const char * fmt, ...) {
@@ -94,6 +111,15 @@ int main() {
     if (inputs.is_listening_on_http()) {
         print_listen_adresses(buffers);
     }
+#if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
+    rivalapps = RivalApp::search();
+    if (rivalapps.size() > 0) {
+        for (RivalApp & rival : rivalapps) {
+            deque_printf(buffers.vt100_in, "Taking over [%d] %s\r\n", rival.pid, rival.cmdline.c_str());
+            rival.takeover();
+        }
+    }
+#endif
     for (;;) {
         inputs.wait(buffers);
 #ifdef INPUT_EVDEV

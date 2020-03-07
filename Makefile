@@ -2,7 +2,7 @@ GITHASH='"'$(shell git log --format="%H" -n 1)'"'
 
 CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 
-CPPFLAGS += -Wall -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
+CPPFLAGS += -Wall -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH) -falign-labels=8 -std=gnu++17
 
 ifeq ("$(DEBUG)","true")
 	CPPFLAGS += -g -pg
@@ -22,8 +22,8 @@ all: tracexec linux kobo
 
 build/tracexec.x:
 	mkdir -p build
-	gcc src/tracexec.c -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tracexec.x86
-	$(CROSS_TC)-gcc src/tracexec.c -Wall -falign-labels=8 -Wno-unused-value -o build/tracexec.x
+	gcc src/tracexec.cpp -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tracexec.x86
+	$(CROSS_TC)-gcc src/tracexec.cpp -Wall -falign-labels=8 -Wno-unused-value -o build/tracexec.x
 
 src/_kbsend.hpp: src/kbsend.html
 	xxd -i src/kbsend.html > src/_kbsend.hpp || echo "install xxd to update src/_kbsend.hpp"

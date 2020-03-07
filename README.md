@@ -88,35 +88,32 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
 
 After [some discussion](https://github.com/NiLuJe/FBInk/issues/45), I decided to
 try to build a program which can break into Nickel and drain evdev events.
-So `tracexec.c` was born. Its quite flexible and can be used to execute arbitrary
-assembly/syscalls inside other processes on `amd64` and `arm-eabi`:
+So `tracexec.hpp` was born. Its quite flexible and can be used to execute arbitrary
+assembly/syscaljs inside other processes on `amd64` and `arm-eabi`.
+Here is an example of a script to list file descriptor flags - using syscalls
+withing the tracee. Up to commit cd26d64 there was also support for
+easy assembly instruction execution inside the tracee, but since moving
+all globals into a C++ class I have yet to update those macros..
 
-```c
-int main(int argc, char ** argv) {
+```cpp
+#include "tracexec.hpp"
+
+int main (int argc, const char ** argv){
     long err;
-    if (argc < 2) { printf("usage:  %s PID\n", argv[0]); exit(1); }
-    pid = atoi(argv[1]);
+    pid_t pid = atoi(argv[1]);
+    tracexec tracee;
+    tracee.pid = pid;
+    kill(pid, SIGSTOP);
     try_ptrace(PTRACE_SEIZE, pid, 0, 0);
-    try_ptrace(PTRACE_GETREGS, pid, 0, &reset_regs);
-
-    // execute a syscall inside tracee
-    int syscall_pid = tracee_syscall(__NR_getpid, 0);
-    printf("tracee pid: %d\n", syscall_pid);
-
-    // execute assembly inside tracee
-    TRACEE_ASM(
-        "push 0x2048454c\n"
-        "mov rax, 1\n"
-        "mov rdi, 1\n"
-        "mov rsi, rsp\n"
-        "mov rdx, 4\n"
-        "syscall\n"
-        "pop rax\n"
-    )
-
-    try_ptrace(PTRACE_SETREGS, pid, 0, &reset_regs);
-    try_ptrace(PTRACE_DETACH, pid, 0, SIGSTOP);
-    return 0;
+    waitpid(pid, 0, 0);
+    try_ptrace(PTRACE_GETREGS, pid, 0, &tracee.reset_regs);
+    int fd = 0, flags;
+    while ((flags = tracee.fcntl(fd, F_GETFL, 0)) >= 0) {
+        printf("[%d]: %d\n", fd, flags);
+        fd += 1;
+    }
+    try_ptrace(PTRACE_SETREGS, pid, 0, &tracee.reset_regs);
+    try_ptrace(PTRACE_DETACH, pid, 0, SIGCONT);
 }
 ```
 
