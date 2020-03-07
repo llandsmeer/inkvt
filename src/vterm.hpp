@@ -24,9 +24,14 @@
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
 
+// reset high_throughput_mode check every <n> ms
+constexpr int INTERVAL_MS = 100;
 // on my laptop, throughput on high output programs
 // is ~ 300k output_char() calls per 100ms
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 100000;
+// after <n> consecutive ticks of the timer without writes
+// disable timer (sleep) mode, to save battery life
+constexpr int TIMER_SLEEP_MODE_THRESHOLD = 10;
 
 class VTermToFBInk {
 public:
@@ -35,10 +40,17 @@ public:
     VTermScreenCallbacks vtsc;
 
     // timer to detect huge output streams
-    int timerfd;
+    int timerfd = -1;
     long nwrites_in_interval = 0;
     bool high_throughput_mode = false;
     VTermPos last_cursor;
+    bool timer_is_running = false;
+    int nticks_without_output = 0;
+
+    itimerspec ts_on;
+    itimerspec ts_off = {0};
+    //ts.it_value.tv_nsec = 100*1000000;
+    //ts.it_interval.tv_nsec = 100*1000000;
 
     int fbfd;
     FBInkConfig config = { 0 };
@@ -53,6 +65,15 @@ public:
             full_refresh.end_row = state.max_rows;
             term_damage(full_refresh, this);
             term_movecursor(last_cursor, last_cursor, 1, this);
+        }
+        if (nwrites_in_interval == 0) {
+            nticks_without_output += 1;
+            if (nticks_without_output > TIMER_SLEEP_MODE_THRESHOLD) {
+                timerfd_settime(timerfd, 0, &ts_off, 0);
+                timer_is_running = false;
+            }
+        } else {
+            nticks_without_output = 0;
         }
         nwrites_in_interval = 0;
     }
@@ -72,11 +93,20 @@ public:
     }
 
     void output_char(const VTermPos & pos) {
+        // high throughput stuff
         nwrites_in_interval += 1;
-        if (high_throughput_mode) return;
-        if (nwrites_in_interval > HIGH_THROUGHPUT_THRESHOLD) {
-            high_throughput_mode = true;
+        if (timer_is_running) {
+            if (high_throughput_mode) return;
+            if (nwrites_in_interval > HIGH_THROUGHPUT_THRESHOLD) {
+                high_throughput_mode = true;
+            }
+        } else if (timerfd != -1 /* we get called before timerfd creation in setup */) {
+            if (timerfd_settime(timerfd, 0, &ts_on, 0) >= 0) {
+                timer_is_running = true;
+                nticks_without_output = 0;
+            }
         }
+        // drawing stuff
         VTermRect rect;
         rect.start_row = pos.row;
         rect.start_col = pos.col;
@@ -224,9 +254,8 @@ public:
             perror("timerfd_create");
             exit(1);
         }
-        itimerspec ts = { 0 };
-        ts.it_value.tv_nsec = 100*1000000;
-        ts.it_interval.tv_nsec = 100*1000000;
-        timerfd_settime(timerfd, 0, &ts, 0);
+        ts_on.it_value.tv_nsec = INTERVAL_MS*1000000;
+        ts_on.it_interval.tv_nsec = INTERVAL_MS*1000000;
+        timerfd_settime(timerfd, 0, &ts_off, 0);
     }
 };
