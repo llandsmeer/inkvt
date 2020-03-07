@@ -45,13 +45,16 @@ class Inputs {
 public:
     Server server;
 private:
-    const int FD_EVDEV = 1;
-    const int FD_SERIAL = 2;
-    const int FD_PROGOUT = 3;
-    const int FD_SERVER = 4;
-    const int FD_SIGNAL = 5;
-    const int FD_STDIN = 6;
-    int fdtype[128];
+    enum fdtype {
+        FD_EVDEV,
+        FD_SERIAL,
+        FD_PROGOUT,
+        FD_SERVER,
+        FD_SIGNAL,
+        FD_STDIN,
+        FD_VTERM_TIMER,
+    };
+    fdtype fdtype[128];
     struct pollfd fds[128];
     int nfds = 0;
     bool should_reset_termios = 0;
