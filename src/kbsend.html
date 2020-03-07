@@ -83,6 +83,11 @@ function process(e) {
         case 'Enter':
             key = '\n';
             break;
+        case 'Tab':
+            key = '\t';
+            break;
+        case 'CapsLock':
+            return;
         case 'Escape':
             key = '\x1b'
             break;
