@@ -105,6 +105,7 @@ int main() {
 #endif
     inputs.add_signals();
     inputs.add_http(7800);
+    inputs.add_vterm_timer(vterm.timerfd, &vterm);
     atexit(handle_atexit);
     pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
     deque_printf(buffers.vt100_in, "inkvt\r\nversion %s\r\n", GITHASH);

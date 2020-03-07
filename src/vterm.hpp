@@ -1,8 +1,32 @@
+/* inkvt - VT100 terminal for E-ink devices
+ * Copyright (C) 2020 Lennart Landsmeer <lennart@landsmeer.email>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
 #include <algorithm>
+#include <sys/timerfd.h>
+#include <iostream>
 
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
-#include<iostream>
+
+// on my laptop, throughput on high output programs
+// is ~ 300k output_char() calls per 100ms
+constexpr long HIGH_THROUGHPUT_THRESHOLD = 100000;
 
 class VTermToFBInk {
 public:
@@ -10,10 +34,28 @@ public:
     VTermScreen * screen;
     VTermScreenCallbacks vtsc;
 
+    // timer to detect huge output streams
+    int timerfd;
+    long nwrites_in_interval = 0;
+    bool high_throughput_mode = false;
+    VTermPos last_cursor;
+
     int fbfd;
     FBInkConfig config = { 0 };
     FBInkState state = { 0 };
     FBInkDump dump = { 0 };
+
+    void tick() {
+        if (high_throughput_mode && nwrites_in_interval < HIGH_THROUGHPUT_THRESHOLD) {
+            high_throughput_mode = false;
+            VTermRect full_refresh = { 0, 0, 0, 0};
+            full_refresh.end_col = state.max_cols;
+            full_refresh.end_row = state.max_rows;
+            term_damage(full_refresh, this);
+            term_movecursor(last_cursor, last_cursor, 1, this);
+        }
+        nwrites_in_interval = 0;
+    }
 
     void update_fg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
@@ -30,6 +72,11 @@ public:
     }
 
     void output_char(const VTermPos & pos) {
+        nwrites_in_interval += 1;
+        if (high_throughput_mode) return;
+        if (nwrites_in_interval > HIGH_THROUGHPUT_THRESHOLD) {
+            high_throughput_mode = true;
+        }
         VTermRect rect;
         rect.start_row = pos.row;
         rect.start_col = pos.col;
@@ -85,6 +132,8 @@ public:
 
     static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
         VTermToFBInk * me = (VTermToFBInk*)user;
+        me->last_cursor = pos; // keep track of cursor in high_throughput_mode
+        if (me->high_throughput_mode) return 1;
         VTermScreenCell cell;
 
         // remove previous cursor
@@ -169,5 +218,15 @@ public:
         vterm_screen_set_callbacks(screen, &vtsc, this);
         vterm_screen_enable_altscreen(screen, 1);
         vterm_screen_reset(screen, 1);
+
+        timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+        if (timerfd == -1) {
+            perror("timerfd_create");
+            exit(1);
+        }
+        itimerspec ts = { 0 };
+        ts.it_value.tv_nsec = 100*1000000;
+        ts.it_interval.tv_nsec = 100*1000000;
+        timerfd_settime(timerfd, 0, &ts, 0);
     }
 };

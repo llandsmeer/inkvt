@@ -36,6 +36,7 @@
 #include "setup_serial.hpp"
 #include "buffers.hpp"
 #include "insecure_http.hpp"
+#include "vterm.hpp"
 
 static int _is_event_device(const struct dirent *dir) {
     return strncmp("event", dir->d_name, 5) == 0;
@@ -59,6 +60,7 @@ private:
     int nfds = 0;
     bool should_reset_termios = 0;
     struct termios termios_reset = { 0 };
+    VTermToFBInk * vterm = 0;
 
     struct {
         int x;
@@ -133,6 +135,13 @@ private:
         server.accept(buffers.keyboard);
     }
 
+    void handle_vterm_timer(Buffers & buffers, int fd) {
+        uint64_t buf;
+        if (read(fd, &buf, sizeof(buf)) > 0) {
+            vterm->tick();
+        }
+    }
+
     void handle_signal(Buffers & buffers, int fd) {
         struct signalfd_siginfo fdsi;
         ssize_t s = read(fd, &fdsi, sizeof(struct signalfd_siginfo));
@@ -160,26 +169,23 @@ public:
             if (!fds[i].revents) continue;
             if (fdtype[i] == FD_EVDEV) {
                 handle_evdev(buffers, fds[i].fd);
-            }
-            if (fdtype[i] == FD_SERIAL) {
+            } else if (fdtype[i] == FD_SERIAL) {
                 handle_serial(buffers, fds[i].fd);
-            }
-            if (fdtype[i] == FD_PROGOUT) {
+            } else if (fdtype[i] == FD_PROGOUT) {
                 if (fds[i].revents & POLLHUP) {
                     // pty slave disconnected
                     exit(0);
                 } else {
                     handle_progout(buffers, fds[i].fd);
                 }
-            }
-            if (fdtype[i] == FD_SERVER) {
+            } else if (fdtype[i] == FD_SERVER) {
                 handle_server(buffers, fds[i].fd);
-            }
-            if (fdtype[i] == FD_SIGNAL) {
+            } else if (fdtype[i] == FD_SIGNAL) {
                 handle_signal(buffers, fds[i].fd);
-            }
-            if (fdtype[i] == FD_STDIN) {
+            } else if (fdtype[i] == FD_STDIN) {
                 handle_stdin(buffers, fds[i].fd);
+            } else if (fdtype[i] == FD_VTERM_TIMER) {
+                handle_vterm_timer(buffers, fds[i].fd);
             }
         }
     }
@@ -210,6 +216,13 @@ public:
         fdtype[nfds] = FD_PROGOUT;
         fds[nfds].events = POLLIN | POLLHUP;
         fds[nfds++].fd = fd;
+    }
+
+    void add_vterm_timer(int fd, VTermToFBInk * vterm) {
+        fdtype[nfds] = FD_VTERM_TIMER;
+        fds[nfds].events = POLLIN;
+        fds[nfds++].fd = fd;
+        this->vterm = vterm;
     }
 
     void add_serial() {
