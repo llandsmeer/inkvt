@@ -117,7 +117,7 @@ private:
         int nread = read(fd, buf, sizeof(buf));
         if (nread < 0) return;
         for (int i = 0; i < nread; i++) {
-            buffers.prog_stdout.push_back(buf[i]);
+            buffers.vt100_in.push_back(buf[i]);
         }
         // NOTE: Don't read out everything available
         // That would mean blocking in this function,

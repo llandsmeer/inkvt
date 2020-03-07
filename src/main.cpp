@@ -166,11 +166,6 @@ int main() {
             }
             pty.write(c);
         }
-        while (buffers.prog_stdout.size() > 0) {
-            int c = buffers.prog_stdout.front();
-            buffers.prog_stdout.pop_front();
-            buffers.vt100_in.push_back(c);
-        }
         while (buffers.vt100_in.size() > 0) {
             int c = buffers.vt100_in.front();
             buffers.vt100_in.pop_front();
