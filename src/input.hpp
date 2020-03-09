@@ -251,10 +251,13 @@ public:
 #endif
     }
 
-    void add_http(int port) {
-        server.setup(port);
+    int add_http(int port) {
+        if (server.setup(port) < -1) {
+            return -1;
+        }
         fdtype[nfds] = FD_SERVER;
         fds[nfds++] = server.get_pollfd();
+        return 0;
     }
 
     bool is_listening_on_http() {

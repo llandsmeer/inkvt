@@ -63,19 +63,35 @@ public:
         return ret;
     }
 
-    void setup(int port) {
+    int setup(int port) {
         long err;
         int opt = 1;
-        fd = server_try(socket(AF_INET, SOCK_STREAM, 0));
-        server_try(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)));
+        fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (fd < 0) {
+            perror("socket");
+            return -1;
+        }
+        err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
+        if (err < 0) {
+            perror("setsockopt");
+        }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
         address.sin_port = htons(port);
-        server_try(bind(fd, (struct sockaddr *)&address, sizeof(address)));
-        server_try(listen(fd, 3));
+        err = bind(fd, (struct sockaddr *)&address, sizeof(address));
+        if (fd < 0) {
+            perror("bind");
+            return -1;
+        }
+        err = listen(fd, 3);
+        if (fd < 0) {
+            perror("listen");
+            return -1;
+        }
         int flags = server_try(fcntl(fd, F_GETFL, 0));
         fcntl(fd, F_SETFL, flags | O_NONBLOCK);
         this->port = port;
+        return 0;
     }
 
     void accept(std::deque<char> & output) {

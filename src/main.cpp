@@ -104,7 +104,9 @@ int main() {
     inputs.add_ttyraw();
 #endif
     inputs.add_signals();
-    inputs.add_http(7800);
+    if (inputs.add_http(7800) < 0) {
+        deque_printf(buffers.vt100_in, "http server setup failed\r\n", GITHASH);
+    }
     inputs.add_vterm_timer(vterm.timerfd, &vterm);
     atexit(handle_atexit);
     pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
