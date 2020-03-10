@@ -28,7 +28,12 @@
 constexpr int INTERVAL_MS = 100;
 // on my laptop, throughput on high output programs
 // is ~ 300k output_char() calls per 100ms
+// on the kobo, random values between 4k and 14k
+#ifdef TARGET_KOBO
+constexpr long HIGH_THROUGHPUT_THRESHOLD = 3000;
+#else
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 100000;
+#endif
 // after <n> consecutive ticks of the timer without writes
 // disable timer (sleep) mode, to save battery life
 constexpr int TIMER_SLEEP_MODE_THRESHOLD = 10;
