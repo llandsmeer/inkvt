@@ -84,39 +84,6 @@ Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
  - Speed up text output when there is a lot of output. Like debounce to 10Hz screen
    updates or skip scrolling/jump scrolling.
 
-# Tracexec
-
-After [some discussion](https://github.com/NiLuJe/FBInk/issues/45), I decided to
-try to build a program which can break into Nickel and drain evdev events.
-So `tracexec.hpp` was born. Its quite flexible and can be used to execute arbitrary
-assembly/syscaljs inside other processes on `amd64` and `arm-eabi`.
-Here is an example of a script to list file descriptor flags - using syscalls
-withing the tracee. Up to commit cd26d64 there was also support for
-easy assembly instruction execution inside the tracee, but since moving
-all globals into a C++ class I have yet to update those macros..
-
-```cpp
-#include "tracexec.hpp"
-
-int main (int argc, const char ** argv){
-    long err;
-    pid_t pid = atoi(argv[1]);
-    tracexec tracee;
-    tracee.pid = pid;
-    kill(pid, SIGSTOP);
-    try_ptrace(PTRACE_SEIZE, pid, 0, 0);
-    waitpid(pid, 0, 0);
-    try_ptrace(PTRACE_GETREGS, pid, 0, &tracee.reset_regs);
-    int fd = 0, flags;
-    while ((flags = tracee.fcntl(fd, F_GETFL, 0)) >= 0) {
-        printf("[%d]: %d\n", fd, flags);
-        fd += 1;
-    }
-    try_ptrace(PTRACE_SETREGS, pid, 0, &tracee.reset_regs);
-    try_ptrace(PTRACE_DETACH, pid, 0, SIGCONT);
-}
-```
-
 # Related projects:
 
  - [fbpad-eink](https://github.com/kisonecat/fbpad-eink)
