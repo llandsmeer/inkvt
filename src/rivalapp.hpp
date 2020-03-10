@@ -9,8 +9,11 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/input.h>
 
-#include "tracexec.hpp"
+#include "tsyscall.hpp"
 
 std::string get_cmdline(pid_t pid) {
     // /proc/{pid}/cmdline: arguments separated by \0's, and ends with an extra \0
@@ -32,17 +35,15 @@ struct RivalApp {
     std::vector<int> fds = { };
     std::string cmdline;
 
-    tracexec te;
+    struct tsyscall t;
 
     void takeover() {
         long err;
-        te.pid = pid;
-        kill(pid, SIGSTOP);
-        try_ptrace(PTRACE_SEIZE, pid, 0, 0);
-        waitpid(pid, 0, 0);
-        try_ptrace(PTRACE_GETREGS, pid, 0, &te.reset_regs);
+        t.pid = pid;
+        t.begin(pid);
         for (int fd : fds) {
-            err = te.ioctl(fd, EVIOCGRAB, 0);
+            err = t.ioctl(fd, EVIOCGRAB, 0);
+            printf("ioctl => %ld\n", err);
         }
     }
 
@@ -50,19 +51,19 @@ struct RivalApp {
         long err;
         for (int fd : fds) {
             int nevents = 0;
-            int fsflags = te.fcntl(fd, F_GETFL, 0);
+            int fsflags = t.fcntl(fd, F_GETFL, 0);
             if (!(fsflags & O_NONBLOCK)) {
-                err = te.fcntl(fd, F_SETFL, fsflags | O_NONBLOCK);
+                err = t.fcntl(fd, F_SETFL, fsflags | O_NONBLOCK);
+                printf("fcntl => %ld\n", err);
             }
-            while(te.read(fd, (void*)(SP(te.regs)-2048), sizeof(struct input_event)) > 0) {
+            while(t.read(fd, (void*)(t.sp()-2048), sizeof(struct input_event)) > 0) {
                 nevents += 1;
             }
-            printf("flushed %d events\n", nevents);
+            printf("fd %d: flushed %d events\n", fd, nevents);
             fcntl(fd, F_SETFL, fsflags);
             // err = te.ioctl(fd, EVIOCGRAB, 1); // we should only grab the onces back which we ungrabbed
         }
-        try_ptrace(PTRACE_SETREGS, pid, 0, &te.reset_regs);
-        try_ptrace(PTRACE_DETACH, pid, 0, SIGCONT);
+        t.end();
     }
 
     static std::vector<RivalApp> search(std::vector<const char*> targets = { "/dev/input/event0", "/dev/input/event1", "/dev/input/event2" }) {
