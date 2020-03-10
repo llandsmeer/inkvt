@@ -151,7 +151,6 @@ private:
         } else {
             printf("Got signal %d, exiting now\n", fdsi.ssi_signo);
             exit(EXIT_SUCCESS);
-            raise(SIGTERM);
         }
     }
 

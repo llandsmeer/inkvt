@@ -38,11 +38,10 @@ struct RivalApp {
     struct tsyscall t;
 
     void takeover() {
-        long err;
         t.pid = pid;
         t.begin(pid);
         for (int fd : fds) {
-            err = t.ioctl(fd, EVIOCGRAB, 0);
+            long err = t.ioctl(fd, EVIOCGRAB, 0);
             printf("ioctl => %ld\n", err);
         }
     }

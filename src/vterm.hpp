@@ -132,7 +132,7 @@ public:
     }
 
     static int term_damage(VTermRect rect, void * user) {
-        VTermToFBInk * me = (VTermToFBInk*)user;
+        VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
         VTermScreenCell cell;
         VTermPos pos;
         int row, col;
@@ -166,7 +166,7 @@ public:
     }
 
     static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
-        VTermToFBInk * me = (VTermToFBInk*)user;
+        VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
         me->last_cursor = pos; // keep track of cursor in high_throughput_mode
         if (me->high_throughput_mode) return 1;
         VTermScreenCell cell;

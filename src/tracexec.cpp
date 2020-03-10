@@ -1,7 +1,6 @@
 #include "tracexec.hpp"
 
 int main (int argc, const char ** argv){
-    long err;
     pid_t pid = atoi(argv[1]);
     tracexec tracee;
     tracee.pid = pid;
