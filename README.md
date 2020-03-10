@@ -2,7 +2,7 @@
 
 WIP VT100 terminal emulator for the Kobo Libra H2O (and probably all targets supported by FBInk)
 
-<img src=it_works.jpeg width=400 align=right />
+<img src=it_works.jpeg width=800/>
 
 So recently I bought a Kobo Libra H2O and decided that it needs a terminal
 emulator. The main problem is now input.
