@@ -97,7 +97,7 @@ int main() {
     pty.setup();
     vterm.setup();
     inputs.add_progout(pty.master);
-    inputs.add_serial();
+    // inputs.add_serial();
 #ifdef INPUT_EVDEV
     inputs.add_evdev();
 #else
@@ -114,6 +114,9 @@ int main() {
     if (inputs.is_listening_on_http()) {
         print_listen_adresses(buffers);
     }
+    int seconds = 20;
+    inputs.add_exit_after(seconds);
+    deque_printf(buffers.vt100_in, "waiting %d seconds on input\r\n", seconds);
 #if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
     rivalapps = RivalApp::search();
     if (rivalapps.size() > 0) {
@@ -162,6 +165,7 @@ int main() {
             }
         }
         while (buffers.keyboard.size() > 0) {
+            inputs.had_input = 1;
             int c = buffers.keyboard.front();
             buffers.keyboard.pop_front();
             if (keytrans.is_ctrl()) {

@@ -21,6 +21,7 @@
 #define _GNU_SOURCE
 #endif
 
+#include <sys/timerfd.h>
 #include <signal.h>
 #include <unistd.h>
 #include <dirent.h>
@@ -45,6 +46,7 @@ static int _is_event_device(const struct dirent *dir) {
 class Inputs {
 public:
     Server server;
+    bool had_input = 0;
 private:
     enum fdtype {
         FD_EVDEV,
@@ -54,6 +56,7 @@ private:
         FD_SIGNAL,
         FD_STDIN,
         FD_VTERM_TIMER,
+        FD_TIMER_NO_INPUT,
     };
     fdtype fdtype[128];
     struct pollfd fds[128];
@@ -161,6 +164,14 @@ private:
         }
     }
 
+    void handle_input_timeout(Buffers & buffers, int fd) {
+        uint64_t buf;
+        if (read(fd, &buf, sizeof(buf)) > 0 && !had_input) {
+            printf("input timeout\n");
+            exit(1);
+        }
+    }
+
 public:
     void wait(Buffers & buffers) {
         poll(fds, nfds, -1);
@@ -185,6 +196,8 @@ public:
                 handle_stdin(buffers, fds[i].fd);
             } else if (fdtype[i] == FD_VTERM_TIMER) {
                 handle_vterm_timer(buffers, fds[i].fd);
+            } else if (fdtype[i] == FD_TIMER_NO_INPUT) {
+                handle_input_timeout(buffers, fds[i].fd);
             }
         }
     }
@@ -307,6 +320,27 @@ public:
 
     void atexit() {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &termios_reset);
+    }
+
+    void add_exit_after(int seconds) {
+        itimerspec ts;
+        int timerfd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+        if (timerfd < 0) {
+            perror("add_exit_after:timerfd_create");
+            exit(1);
+        }
+        ts.it_value.tv_sec = seconds;
+        ts.it_value.tv_nsec = 0;
+        ts.it_interval.tv_sec = 0;
+        ts.it_interval.tv_nsec = 0;
+        long err = timerfd_settime(timerfd, 0, &ts, 0);
+        if (err < 0) {
+            perror("add_exit_after:timerfd_settime");
+            exit(1);
+        }
+        fdtype[nfds] = FD_TIMER_NO_INPUT;
+        fds[nfds].events = POLLIN;
+        fds[nfds++].fd = timerfd;
     }
 
 };
