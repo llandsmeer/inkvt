@@ -97,6 +97,18 @@ function process(e) {
         case 'Backspace':
             key = '\x7f'
             break;
+        case 'ArrowUp':
+            key = '\x1b[A'
+            break;
+        case 'ArrowDown':
+            key = '\x1b[B'
+            break
+        case 'ArrowLeft':
+            key = '\x1b[D'
+            break;
+        case 'ArrowRight':
+            key = '\x1b[C'
+            break;
     }
     send_key(key)
     return false;
