@@ -9,12 +9,15 @@ It might brick your device.
 Only install this if you know what you are doing.
 If anything breaks, let me know!
 I'd like turn this into a stable piece of software eventually :)
+The kfmon/nickel interaction code is stolen from [KOReader](https://github.com/koreader/koreader)
 
-The installation assumes you have `kfmon` installed
+The installation assumes you have [kfmon](https://github.com/NiLuJe/kfmon) installed
 
 The `make kobo` target expects a working `arm-eabihf` cross-compiler.
 I downloaded mine from [Linaro](https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/)
-(as that seems to be the one the Kobo team uses), but other builds might work just as fine.
+(as that seems to be the one the Kobo team uses).
+The ubuntu `gcc-arm-linux-gnueabihf`, `libc6-dev-armhf-cross`, `g++-arm-linux-gnueabihf`  and `libstdc++-4.8-dev-armhf-cross`
+packages might work too.
 Then update the `CROSS_TC` variable in the Makefile.
 
 ```
@@ -100,6 +103,12 @@ Nevertheless, if you need this `make INPUT_EVDEV=true` should generate 3 binarie
 
 So to run, copy `./build/inkvt.armhf` to `/mnt/onboard`, SSH into the Kobo device and run `./inkvt.armhf`.
 Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
+
+# OTA
+
+For development, I found the follow workflow eases deployment:
+Run `python3 -m http.server` from the `inkvt/build` directory.
+Then after each `make`, just `wget` on the Kobo side.
 
 # Todo
 
