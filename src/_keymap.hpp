@@ -3,7 +3,7 @@
 
 #pragma once
 #include <deque>
-#include <linux/input-event-codes.h>
+#include <linux/input.h>
 
 class KeycodeTranslation {
     int _is_leftmeta_down;
