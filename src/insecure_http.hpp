@@ -39,6 +39,11 @@
 #define GITHASH "<unknown>"
 #endif
 
+// NOTE: Actually only implemented on Linux >= 3.9, so, here be dragons on < Mk. 7
+#ifndef SO_REUSEPORT
+#define SO_REUSEPORT 15
+#endif
+
 #define server_try(x) (err = (x), (err < 0? \
         (printf("ERROR: " #x " = %ld (errno = %s)\n", err, strerror(errno)), exit(1)) : (void)0), err)
 
