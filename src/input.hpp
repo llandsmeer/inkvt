@@ -282,6 +282,10 @@ public:
             system(module_path);
         }
 
+        // Sleep a bit to leave the kernel time to breathe, because everything is terrible
+        const struct timespec zzz   = { 0L, 500000000L };
+        nanosleep(&zzz, NULL);
+
         int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
         if (fd != -1) {
             fdtype[nfds] = FD_SERIAL;
@@ -290,7 +294,7 @@ public:
             puts("opening /dev/ttyGS0");
             setup_serial(fd);
         } else {
-            printf("couldn't open /dev/ttyGS0: %m");
+            printf("couldn't open /dev/ttyGS0: %m\n");
         }
 #else
         puts("add_serial() is only supported on Kobo devices");
