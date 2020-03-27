@@ -62,13 +62,13 @@ build/libvterm_kobo.a:
 build/libfbink.a:
 	mkdir -p build
 	make -C FBInk clean
-	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u CXXFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true static
+	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u CXXFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true MINIMAL=true FONTS=true static
 	cp FBInk/Release/libfbink.a build/libfbink.a
 
 build/libfbink_kobo.a:
 	mkdir -p build
 	make -C FBInk clean
-	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true static
+	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true MINIMAL=true FONTS=true static
 	cp FBInk/Release/libfbink.a build/libfbink_kobo.a
 
 clean:
