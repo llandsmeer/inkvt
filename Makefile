@@ -2,18 +2,17 @@ GITHASH='"'$(shell git log --format="%H" -n 1)'"'
 
 CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 
-CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
-CFLAGS   += -Wall -falign-labels=8
-CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17
-
 ifeq ("$(DEBUG)","true")
 	CFLAGS   += -g -pg
 	CXXFLAGS += -g -pg
 else
-	CFLAGS   += -O2
-	CXXFLAGS += -O2
+	CFLAGS   ?= -O2
+	CXXFLAGS ?= -O2
 endif
 
+CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
+CFLAGS   += -Wall -falign-labels=8
+CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17
 
 ifeq ("$(INPUT_EVDEV)","true")
 	CPPFLAGS += -DINPUT_EVDEV
