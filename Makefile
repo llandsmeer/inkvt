@@ -2,12 +2,16 @@ GITHASH='"'$(shell git log --format="%H" -n 1)'"'
 
 CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 
-CPPFLAGS += -Wall -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH) -falign-labels=8 -std=gnu++17
+CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
+CFLAGS   += -Wall -falign-labels=8
+CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17
 
 ifeq ("$(DEBUG)","true")
-	CPPFLAGS += -g -pg
+	CFLAGS   += -g -pg
+	CXXFLAGS += -g -pg
 else
-	CPPFLAGS += -O2
+	CFLAGS   += -O2
+	CXXFLAGS += -O2
 endif
 
 
@@ -30,18 +34,18 @@ src/_kbsend.hpp: src/kbsend.html
 
 linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
-	g++ src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS) $(CPPFLAGS)
+	g++ $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS)
 ifneq ("$(DEBUG)","true")
-	strip -s build/inkvt.host
+	strip --strip-unneeded build/inkvt.host
 endif
 ifeq ($(INPUT_EVDEV),"true")
-	g++ src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS) $(CPPFLAGS)
+	g++ $(CPPFLAGS) $(CXXFLAGS) src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS)
 endif
 
 kobo: build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
-	$(CROSS_TC)-g++ -static -DTARGET_KOBO src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(CPPFLAGS)
-	$(CROSS_TC)-strip -s build/inkvt.armhf
+	$(CROSS_TC)-g++ -static -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS)
+	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
 
 build/libvterm.a:
@@ -55,7 +59,7 @@ build/libvterm_kobo.a:
 build/libfbink.a:
 	mkdir -p build
 	make -C FBInk clean
-	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true static
+	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u CXXFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true static
 	cp FBInk/Release/libfbink.a build/libfbink.a
 
 build/libfbink_kobo.a:
