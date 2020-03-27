@@ -14,8 +14,12 @@ CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
 CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17
 
-ifeq ("$(INPUT_EVDEV)","true")
+ifdef INPUT_EVDEV
 	CPPFLAGS += -DINPUT_EVDEV
+endif
+
+ifdef INPUT_SERIAL
+	CPPFLAGS += -DINPUT_SERIAL
 endif
 
 LDFLAGS+=-lm -Lbuild -lutil
