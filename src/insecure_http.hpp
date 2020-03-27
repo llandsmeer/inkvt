@@ -20,13 +20,13 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
-#include <unistd.h> 
-#include <stdio.h> 
+#include <unistd.h>
+#include <stdio.h>
 #include <errno.h>
-#include <sys/socket.h> 
-#include <string.h> 
-#include <stdlib.h> 
-#include <netinet/in.h> 
+#include <sys/socket.h>
+#include <string.h>
+#include <stdlib.h>
+#include <netinet/in.h>
 #include <net/if.h>
 
 #include <vector>
@@ -78,7 +78,12 @@ public:
         }
         err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
         if (err < 0) {
-            perror("setsockopt");
+            perror("setsockopt w/ SO_REUSEPORT");
+            // Retry without SO_REUSEPORT for < Mk. 7
+            err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+            if (err < 0) {
+                perror("setsockopt w/o SO_REUSEPORT");
+            }
         }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
