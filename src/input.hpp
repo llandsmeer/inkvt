@@ -239,27 +239,61 @@ public:
 
     void add_serial() {
 #ifdef TARGET_KOBO
-        // NOTE: Obviously highly platform-specific ;).
-        //       See http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Kobo_Hacks/KoboStuff/src/usr/local/stuff/bin/usbnet-toggle.sh for a slightly more portable example.
-        // NOTE: Extra fun fact: I don't know when Kobo started shipping g_serial, but they didn't on Mk.5, so, here's one I just built to test on my H2O:
+        // NOTE: Do our best to make this mostly portable...
+        //       See http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Kobo_Hacks/KoboStuff/src/usr/local/stuff/bin/usbnet-toggle.sh for a similar example.
+        // NOTE: Fun fact: I don't know when Kobo started shipping g_serial, but they didn't on Mk.5, so, here's one I just built to test on my H2O:
         //       http://files.ak-team.com/niluje/mrpub/Other/USBSerial-Kobo-Mk5-H2O.tar.gz
-        system("insmod /drivers/mx6sll-ntx/usb/gadget/configfs.ko");
-        system("insmod /drivers/mx6sll-ntx/usb/gadget/libcomposite.ko");
-        system("insmod /drivers/mx6sll-ntx/usb/gadget/u_serial.ko");
-        system("insmod /drivers/mx6sll-ntx/usb/gadget/usb_f_acm.ko");
-        system("insmod /drivers/mx6sll-ntx/usb/gadget/g_serial.ko");
+        const char *platform = getenv("PLATFORM");
+
+        // Abort if we can't tell the platform from the env.
+        // NOTE: We could also compute that from FBInk's state via device_platform, although that's not a 1:1 mapping...
+        if (platform == NULL) {
+            puts("add_serial() is only supported on Kobo devices with a proper PLATFORM set in the env!");
+            return;
+        }
+
+        char module_path[PATH_MAX] = { 0 };
+
+        snprintf(module_path, sizeof(module_path), "/drivers/%s/usb/gadget/g_serial.ko", platform);
+        if (access(module_path, F_OK) != 0) {
+            puts("add_serial() is only supported on Kobo devices with a g_serial kernel module!");
+            return;
+        }
+
+        // Cheap Mk. 7+ detection...
+        snprintf(module_path, sizeof(module_path), "/drivers/%s/usb/gadget/configfs.ko", platform);
+        if (access(module_path, F_OK) == 0) {
+            // Mk. 7+
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/configfs.ko", platform);
+            system(module_path);
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/libcomposite.ko", platform);
+            system(module_path);
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/u_serial.ko", platform);
+            system(module_path);
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/usb_f_acm.ko", platform);
+            system(module_path);
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/g_serial.ko", platform);
+            system(module_path);
+        } else {
+            // Older devices
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/arcotg_udc.ko", platform);
+            system(module_path);
+            snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/g_serial.ko", platform);
+            system(module_path);
+        }
+
         int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
         if (fd != -1) {
             fdtype[nfds] = FD_SERIAL;
             fds[nfds].events = POLLIN;
             fds[nfds++].fd = fd;
-            printf("opening /dev/ttyGS0");
+            puts("opening /dev/ttyGS0");
             setup_serial(fd);
         } else {
-            printf("couldn't open /dev/ttyGS0\n");
+            puts("couldn't open /dev/ttyGS0");
         }
 #else
-        puts("add_serial() is only supported on kobo devices");
+        puts("add_serial() is only supported on Kobo devices");
 #endif
     }
 
