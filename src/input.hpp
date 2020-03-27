@@ -290,7 +290,7 @@ public:
             puts("opening /dev/ttyGS0");
             setup_serial(fd);
         } else {
-            puts("couldn't open /dev/ttyGS0");
+            printf("couldn't open /dev/ttyGS0: %m");
         }
 #else
         puts("add_serial() is only supported on Kobo devices");
