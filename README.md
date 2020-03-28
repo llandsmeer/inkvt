@@ -121,8 +121,8 @@ Then after each `make`, just `wget` on the Kobo side.
 
 # Authors/Contributors
 
- - @NiLuJe
- - @llandsmeer
+ - [NiLuJe](https://github.com/llandsmeer/inkvt/commits?author=NiLuJe)
+ - [llandsmeer](https://github.com/llandsmeer/inkvt/commits?author=llandsmeer)
 
 # Related projects:
 
