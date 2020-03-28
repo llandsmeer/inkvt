@@ -93,7 +93,7 @@ p(0, '''
 
 #pragma once
 #include <deque>
-#include <linux/input-event-codes.h>
+#include <linux/input.h>
 
 class KeycodeTranslation {''')
 for k in keymap['_track']:

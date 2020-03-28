@@ -97,7 +97,9 @@ int main() {
     pty.setup();
     vterm.setup();
     inputs.add_progout(pty.master);
-    // inputs.add_serial();
+#ifdef INPUT_SERIAL
+    inputs.add_serial();
+#endif
 #ifdef INPUT_EVDEV
     inputs.add_evdev();
 #else

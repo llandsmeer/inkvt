@@ -21,7 +21,6 @@ export LC_ALL="en_US.UTF-8"
 INKVT_DIR="${0%/*}"
 
 cd "${INKVT_DIR}" || exit
-export TESSDATA_PREFIX="data"
 
 export FROM_NICKEL="false"
 if pkill -0 nickel; then
@@ -67,28 +66,8 @@ fi
 ORIG_FB_ROTA="$(cat /sys/class/graphics/fb0/rotate)"
 echo "Original fb rotation is set @ ${ORIG_FB_ROTA}" >>crash.log 2>&1
 
-ORIG_FB_BPP="$(./fbdepth -g)"
+ORIG_FB_BPP="$(cat /sys/class/graphics/fb0/bits_per_pixel)"
 echo "Original fb bitdepth is set @ ${ORIG_FB_BPP}bpp" >>crash.log 2>&1
-
-case "${ORIG_FB_BPP}" in
-    8) ;;
-    16) ;;
-    32) ;;
-    *)
-        unset ORIG_FB_BPP
-        ;;
-esac
-
-ko_do_fbdepth() {
-    if [ -n "${ORIG_FB_BPP}" ]; then
-        echo "Switching fb bitdepth to 8bpp & rotation to Portrait" >>crash.log 2>&1
-        ./fbdepth -d 8 -r -1 >>crash.log 2>&1
-    fi
-}
-
-if awk '$4~/(^|,)ro($|,)/' /proc/mounts | grep ' /mnt/sd '; then
-    mount -o remount,rw /mnt/sd
-fi
 
 if [ -e crash.log ]; then
     tail -c 500000 crash.log >crash.log.new
@@ -96,91 +75,16 @@ if [ -e crash.log ]; then
 fi
 
 sh ./enable-wifi.sh
-
 sleep 10
 
-CRASH_COUNT=0
-CRASH_TS=0
-CRASH_PREV_TS=0
-# Because we *want* an initial fbdepth pass ;).
-RETURN_VALUE=85
-while [ ${RETURN_VALUE} -ne 0 ]; do
-    # 85 is what we return when asking for a KOReader restart
-    if [ ${RETURN_VALUE} -eq 85 ]; then
-        # Do an update check now, so we can actually update KOReader via the "Restart KOReader" menu entry ;).
-        # Do or double-check the fb depth switch, or restore original bitdepth if requested
-        ko_do_fbdepth
-    fi
+echo "Switching fb bitdepth to 8bpp & rotation to Portrait" >>crash.log 2>&1
+./fbdepth -d 8 -r -1 >>crash.log 2>&1
 
-    ./inkvt.armhf >> crash.log 2>&1
-    RETURN_VALUE=$?
+./inkvt.armhf >> crash.log 2>&1
+RETURN_VALUE=$?
 
-    if [ ${RETURN_VALUE} -ne 0 ] && [ ${RETURN_VALUE} -ne 85 ]; then
-        CRASH_COUNT=$((CRASH_COUNT + 1))
-        CRASH_TS=$(date +'%s')
-        if [ $((CRASH_TS - CRASH_PREV_TS)) -ge 20 ]; then
-            CRASH_COUNT=1
-        fi
-
-        if true; then
-            ALWAYS_ABORT="true"
-            CRASH_COUNT=1
-        else
-            ALWAYS_ABORT="false"
-        fi
-
-        viewWidth=600
-        viewHeight=800
-        FONTH=16
-        eval "$(./fbink -e | tr ';' '\n' | grep -e viewWidth -e viewHeight -e FONTH | tr '\n' ';')"
-        bombHeight=$((viewHeight / 2 + viewHeight / 15))
-        bombMargin=$((FONTH + FONTH / 2))
-        ./fbink -q -b -c -B GRAY9 -m -y 1 "Don't Panic! (Crash n°${CRASH_COUNT} -> ${RETURN_VALUE})"
-        if [ ${CRASH_COUNT} -eq 1 ]; then
-            ./fbink -q -b -O -m -y 2 "Tap the screen to continue."
-        fi
-        ./fbink -q -b -O -m -t regular=./fonts/freefont/FreeSerif.ttf,px=${bombHeight},top=${bombMargin} $'\xf0\x9f\x92\xa3'
-        crashLog="$(tail -n 25 crash.log | sed -e 's/\t/    /g')"
-        ./fbink -q -b -O -t regular=./fonts/droid/DroidSansMono.ttf,top=$((viewHeight / 2 + FONTH * 2 + FONTH / 2)),left=$((viewWidth / 60)),right=$((viewWidth / 60)),px=$((viewHeight / 64)) "${crashLog}"
-        ./fbink -q -f -s
-        {
-            echo "!!!!"
-            echo "Uh oh, something went awry... (Crash n°${CRASH_COUNT}: $(date +'%x @ %X'))"
-            echo "Running FW $(cut -f3 -d',' /mnt/onboard/.kobo/version) on Linux $(uname -r) ($(uname -v))"
-        } >>crash.log 2>&1
-        if [ ${CRASH_COUNT} -lt 5 ] && [ "${ALWAYS_ABORT}" = "false" ]; then
-            echo "Attempting to restart KOReader . . ." >>crash.log 2>&1
-            echo "!!!!" >>crash.log 2>&1
-        fi
-
-        if [ ${CRASH_COUNT} -eq 1 ]; then
-            read -r -t 15 </dev/input/event1
-        fi
-        CRASH_PREV_TS=${CRASH_TS}
-
-        if [ ${CRASH_COUNT} -ge 5 ]; then
-            echo "Too many consecutive crashes, aborting . . ." >>crash.log 2>&1
-            echo "!!!! ! !!!!" >>crash.log 2>&1
-            break
-        fi
-
-        if [ "${ALWAYS_ABORT}" = "true" ]; then
-            echo "Aborting . . ." >>crash.log 2>&1
-            echo "!!!! ! !!!!" >>crash.log 2>&1
-            break
-        fi
-    else
-        CRASH_COUNT=0
-    fi
-done
-
-if [ -n "${ORIG_FB_BPP}" ]; then
-    echo "Restoring original fb bitdepth @ ${ORIG_FB_BPP}bpp & rotation @ ${ORIG_FB_ROTA}" >>crash.log 2>&1
-    ./fbdepth -d "${ORIG_FB_BPP}" -r "${ORIG_FB_ROTA}" >>crash.log 2>&1
-else
-    echo "Restoring original fb rotation @ ${ORIG_FB_ROTA}" >>crash.log 2>&1
-    ./fbdepth -r "${ORIG_FB_ROTA}" >>crash.log 2>&1
-fi
+echo "Restoring original fb bitdepth @ ${ORIG_FB_BPP}bpp & rotation @ ${ORIG_FB_ROTA}" >>crash.log 2>&1
+./fbdepth -d "${ORIG_FB_BPP}" -r "${ORIG_FB_ROTA}" >>crash.log 2>&1
 
 if [ "${FROM_NICKEL}" = "true" ]; then
     if [ "${FROM_KFMON}" != "true" ]; then

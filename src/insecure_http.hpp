@@ -20,13 +20,13 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
-#include <unistd.h> 
-#include <stdio.h> 
+#include <unistd.h>
+#include <stdio.h>
 #include <errno.h>
-#include <sys/socket.h> 
-#include <string.h> 
-#include <stdlib.h> 
-#include <netinet/in.h> 
+#include <sys/socket.h>
+#include <string.h>
+#include <stdlib.h>
+#include <netinet/in.h>
 #include <net/if.h>
 
 #include <vector>
@@ -37,6 +37,11 @@
 
 #ifndef GITHASH
 #define GITHASH "<unknown>"
+#endif
+
+// NOTE: Actually only implemented on Linux >= 3.9, so, here be dragons on < Mk. 7
+#ifndef SO_REUSEPORT
+#define SO_REUSEPORT 15
 #endif
 
 #define server_try(x) (err = (x), (err < 0? \
@@ -73,7 +78,12 @@ public:
         }
         err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt));
         if (err < 0) {
-            perror("setsockopt");
+            perror("setsockopt w/ SO_REUSEPORT");
+            // Retry without SO_REUSEPORT for < Mk. 7
+            err = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+            if (err < 0) {
+                perror("setsockopt w/o SO_REUSEPORT");
+            }
         }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;

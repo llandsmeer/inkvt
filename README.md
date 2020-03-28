@@ -23,8 +23,9 @@ Then update the `CROSS_TC` variable in the Makefile.
 ```
 $ git clone 'https://github.com/llandsmeer/inkvt'
 $ cd inkvt
-make
+make kobo
 cp build/inkvt.armhf koboroot/.adds/inkvt/
+cp build/fbdepth koboroot/.adds/inkvt/
 ```
 
 Then copy the contents of the `koboroot/` directory to your kobo device:
@@ -50,8 +51,8 @@ emulator. The main problem is now input.
 The kernel that comes with the device doesn't support usb host mode,
 but it (OTG) is supported by the hardware. I use my laptop as host,
 which sends keystrokes over serial to the Kobo device via the `g_serial`
-loadable kernel module that comes with the device.
-This option is enabled by uncommenting `inputs.add_serial()` in `src/main.cpp`.
+loadable kernel module that *may* come with the device.
+This option is enabled by passing `INPUT_SERIAL=true` to make.
 The other option is sending keystrokes over wifi, which doesn't require
 loading kernel modules and is more cross-platform (the default).
 
@@ -85,14 +86,14 @@ To send keyboard input, there are 3 options:
    It requires that you're on the same (wifi) network, so for example, the builtin
    phone hotspot or a common wifi router.
    Also, android keyinput is extremely buggy...
- - (disabled by default) `screen /dev/ttyACM0 9600` (this requires firmware version 7 and Kobo Libra H2O or similar hardware):
+ - (disabled by default) `screen /dev/ttyACM0 9600` (this requires a Mk. 7+ device, or a self-built g_serial module):
 
 # Alternative input method (evdev & evdev over serial)
 
 Before tty raw input, I build a keyboard input system around evdev.
 That's a lot less portable than tty raw input, and will probably be obsoleted somewhere in
 the future.
-Nevertheless, if you need this `make INPUT_EVDEV=true` should generate 3 binaries:
+Nevertheless, if you need this, passing `INPUT_EVDEV=true` to make should generate 3 binaries:
 
  - `build/inkvt.armhf`: inkvt built for kobo.
     Sets up serial over USB and listens to `/dev/input/event*` and `/dev/ttyGS0` for evdev

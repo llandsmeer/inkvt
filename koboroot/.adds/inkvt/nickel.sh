@@ -20,7 +20,7 @@ PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/lib:"
 export LD_LIBRARY_PATH="/usr/local/Kobo"
 
 cd /
-unset OLDPWD EXT_FONT_DIR TESSDATA_PREFIX FROM_NICKEL STARDICT_DATA_DIR LC_ALL KO_NO_CBB
+unset OLDPWD FROM_NICKEL LC_ALL
 
 (
     if [ "${PLATFORM}" = "freescale" ] || [ "${PLATFORM}" = "mx50-ntx" ] || [ "${PLATFORM}" = "mx6sl-ntx" ]; then

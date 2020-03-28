@@ -225,6 +225,7 @@ public:
             puts("fbink_open()");
             exit(1);
         }
+        // TODO: Making the font & size configurable might be nice ;).
         config.fontname = FONT_INDEX_E::TERMINUS;
 #ifdef TARGET_KOBO
         config.fontmult = 3;
