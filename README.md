@@ -23,8 +23,9 @@ Then update the `CROSS_TC` variable in the Makefile.
 ```
 $ git clone 'https://github.com/llandsmeer/inkvt'
 $ cd inkvt
-make
+make kobo
 cp build/inkvt.armhf koboroot/.adds/inkvt/
+cp build/fbdepth koboroot/.adds/inkvt/
 ```
 
 Then copy the contents of the `koboroot/` directory to your kobo device:
