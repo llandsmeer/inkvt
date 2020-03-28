@@ -33,6 +33,11 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 
+// NOTE: Actually only implemented on Linux >= 3.4, so, here be dragons on < Mk. 7
+#ifndef PTRACE_SEIZE
+#define PTRACE_SEIZE 0x4206
+#endif
+
 static long ttry_(long err, const char * cmd, int line) {
     if (err < 0 && errno != 0) {
         printf("%s:%d: try failure\n", __FILE__, line);
@@ -171,6 +176,9 @@ struct tsyscall {
     pid_t pid;
     void begin(pid_t pid) {
         this->pid = pid;
+        // NOTE: PTRACE_SEIZE is a Linux >= 3.4 feature (i.e., Mk. 7+)
+        //       If we had to define it ourselves, we'll trip a -fpermissive warning here,
+        //       because PTRACE_SEIZE is actually part of an enum in <sys/ptrace.h> ...
         ttry(ptrace(PTRACE_SEIZE, pid, 0, 0));
         known_state(pid);
         ttry(ptrace(PTRACE_GETREGS, pid, 0, &regs));

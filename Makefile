@@ -12,7 +12,7 @@ endif
 
 CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
-CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17
+CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17 -fpermissive
 
 ifdef INPUT_EVDEV
 	CPPFLAGS += -DINPUT_EVDEV
