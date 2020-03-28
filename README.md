@@ -119,6 +119,11 @@ Then after each `make`, just `wget` on the Kobo side.
    Preferable something typewriter like. And include the
    file as a raw file in the output binary s.t. everything stays in 1 file.
 
+# Authors/Contributors
+
+ - @NiLuJe
+ - @llandsmeer
+
 # Related projects:
 
  - [fbpad-eink](https://github.com/kisonecat/fbpad-eink)
