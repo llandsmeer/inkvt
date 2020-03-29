@@ -79,7 +79,7 @@ fi
 
 # Skip this if WiFi appears to already be up
 # (Interface symlink doesn't exist if the WiFi modules are unloaded, and carrier is only set to 1 if network's up).
-if [ ! -e "/sys/class/net/${INTERFACE}/carrier" -o "$(cat /sys/class/net/${INTERFACE}/carrier)" -ne 1 ]; then
+if [ ! -e "/sys/class/net/${INTERFACE}/carrier" ] || [ "$(cat /sys/class/net/${INTERFACE}/carrier)" -ne 1 ]; then
     ${FBINK_BIN} -qMmp "Enabling WiFi . . ."
     sh ./enable-wifi.sh
     sleep 10
