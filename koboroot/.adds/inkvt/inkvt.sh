@@ -78,12 +78,8 @@ if [ -e crash.log ]; then
 fi
 
 # Skip this if WiFi appears to already be up
-WIFI_CHECK="sdio_wifi_pwr"
-if [ -n "${WIFI_MODULE}" ]; then
-    WIFI_CHECK="${WIFI_MODULE}"
-fi
-
-if ! lsmod | grep -q "${WIFI_CHECK}" ; then
+# (Interface symlink doesn't exist if the WiFi modules are unloaded, and carrier is only set to 1 if network's up).
+if [ ! -e "/sys/class/net/${INTERFACE}/carrier" -o "$(cat /sys/class/net/${INTERFACE}/carrier)" -ne 1 ]; then
     ${FBINK_BIN} -qMmp "Enabling WiFi . . ."
     sh ./enable-wifi.sh
     sleep 10
