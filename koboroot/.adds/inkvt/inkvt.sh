@@ -20,6 +20,9 @@ export LC_ALL="en_US.UTF-8"
 
 INKVT_DIR="${0%/*}"
 
+# KFMon ships a minimal FBInk CLI
+FBINK_BIN="/usr/local/kfmon/bin/fbink"
+
 cd "${INKVT_DIR}" || exit
 
 export FROM_NICKEL="false"
@@ -74,8 +77,17 @@ if [ -e crash.log ]; then
     mv -f crash.log.new crash.log
 fi
 
-sh ./enable-wifi.sh
-sleep 10
+# Skip this if WiFi appears to already be up
+WIFI_CHECK="sdio_wifi_pwr"
+if [ -n "${WIFI_MODULE}" ]; then
+    WIFI_CHECK="${WIFI_MODULE}"
+fi
+
+if ! lsmod | grep -q "${WIFI_CHECK}" ; then
+    ${FBINK_BIN} -qMmp "Enabling WiFi . . ."
+    sh ./enable-wifi.sh
+    sleep 10
+fi
 
 echo "Switching fb bitdepth to 8bpp & rotation to Portrait" >>crash.log 2>&1
 ./fbdepth -d 8 -r -1 >>crash.log 2>&1
