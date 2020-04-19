@@ -1,4 +1,4 @@
-GITHASH='"'$(shell git log --format="%H" -n 1)'"'
+GITHASH='"'$(shell git rev-parse --short HEAD)'"'
 
 # CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 CROSS_TC?=arm-linux-gnueabihf
@@ -58,6 +58,16 @@ kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	$(CROSS_TC)-g++ -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(STATIC_STL_FLAG)
 	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
+
+release: kobo
+	mkdir -p Kobo/.adds/inkvt Kobo/.adds/kfmon/config
+	cp -av $(CURDIR)/build/inkvt.armhf Kobo/.adds/inkvt
+	cp -av $(CURDIR)/build/fbdepth Kobo/.adds/inkvt
+	cp -av $(CURDIR)/koboroot/.adds/inkvt/. Kobo/.adds/inkvt/.
+	cp -av $(CURDIR)/koboroot/inkvt.png Kobo/
+	cp -av $(CURDIR)/koboroot/inkvt.ini Kobo/.adds/kfmon/config/inkvt.ini
+	cd Kobo && zip -r ../InkVT-$(shell git rev-parse --short HEAD).zip .
+	rm -rf Kobo
 
 build/libvterm.a:
 	make -f Makevterm clean
