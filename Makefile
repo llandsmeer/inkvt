@@ -13,13 +13,16 @@ endif
 
 CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
-CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17 -fpermissive
+CXXFLAGS += -Wall -falign-labels=8 -fpermissive
 
 # Attempt to automatically drop -static-libstdc++ when using the Nickel TC...
-ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-nickel-linux-gnueabihf)
+ifeq ($(shell PATH='$(PATH)' $(CROSS_TC)-gcc -dumpmachine 2>/dev/null), arm-nickel-linux-gnueabihf)
 	STATIC_STL_FLAG:=
+	# What can I say, it's old...
+	CXXFLAGS += -std=gnu++14
 else
 	STATIC_STL_FLAG:= -static-libstdc++
+	CXXFLAGS += -std=gnu++17
 endif
 
 ifdef INPUT_EVDEV
