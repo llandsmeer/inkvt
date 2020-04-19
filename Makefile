@@ -15,6 +15,13 @@ CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
 CXXFLAGS += -Wall -falign-labels=8 -std=gnu++17 -fpermissive
 
+# Attempt to automatically drop -static-libstdc++ when using the Nickel TC...
+ifeq ($(shell PATH='$(PATH)' $(CC) -dumpmachine 2>/dev/null), arm-nickel-linux-gnueabihf)
+	STATIC_STL_FLAG:=
+else
+	STATIC_STL_FLAG:= -static-libstdc++
+endif
+
 ifdef INPUT_EVDEV
 	CPPFLAGS += -DINPUT_EVDEV
 endif
@@ -48,7 +55,7 @@ endif
 
 kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
-	$(CROSS_TC)-g++ -static -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS)
+	$(CROSS_TC)-g++ -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(STATIC_STL_FLAG)
 	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
 
