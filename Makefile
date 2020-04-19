@@ -99,3 +99,4 @@ clean:
 	make -C FBInk clean
 	make -f Makevterm clean
 	rm -fr build/
+	rm -f InkVT-*.zip
