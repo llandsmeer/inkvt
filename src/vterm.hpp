@@ -228,7 +228,7 @@ public:
         // TODO: Making the font & size configurable might be nice ;).
         config.fontname = FONT_INDEX_E::TERMINUS;
 #ifdef TARGET_KOBO
-        config.fontmult = 3;
+        config.fontmult = 2;
 #else
         config.fontmult = 1;
 #endif

@@ -6,3 +6,16 @@ __pycache__/
 /analysis.txt
 /gmon.out
 /koboroot/.adds/inkvt/inkvt.armhf
+/koboroot/.adds/inkvt/dropbearmulti
+/koboroot/.adds/inkvt/fbdepth
+/koboroot/.adds/inkvt/fbgrab
+/koboroot/.adds/inkvt/gcore
+/koboroot/.adds/inkvt/gdb
+/koboroot/.adds/inkvt/htop
+/koboroot/.adds/inkvt/scp
+/koboroot/.adds/inkvt/ssh-add
+/koboroot/.adds/inkvt/ssh-agent
+/koboroot/.adds/inkvt/ssh-keygen
+/koboroot/.adds/inkvt/ssh-keyscan
+/koboroot/.adds/inkvt/strace
+/koboroot/.adds/inkvt/tmux
