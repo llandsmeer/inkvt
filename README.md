@@ -14,24 +14,29 @@ The kfmon/nickel interaction code is stolen from [KOReader](https://github.com/k
 The installation assumes you have [kfmon](https://github.com/NiLuJe/kfmon) installed
 
 The `make kobo` target expects a working `arm-eabihf` cross-compiler.
-I downloaded mine from [Linaro](https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/)
-(as that seems to be the one the Kobo team uses).
-The ubuntu `gcc-arm-linux-gnueabihf`, `libc6-dev-armhf-cross`, `g++-arm-linux-gnueabihf`  and `libstdc++-4.8-dev-armhf-cross`
-packages might work too.
+The Makefile by default assumes the cross-compilers in the apt standard repository to be present.
+This comprises the ubuntu `gcc-arm-linux-gnueabihf`, `libc6-dev-armhf-cross`, `g++-arm-linux-gnueabihf`  and `libstdc++-4.8-dev-armhf-cross`
+packages.
+The [Linaro toolchain](https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/)
+might work too, as that seems to be the one the Kobo team uses.
 Then update the `CROSS_TC` variable in the Makefile.
 
 ```
+$ sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 $ git clone 'https://github.com/llandsmeer/inkvt'
 $ cd inkvt
-make kobo
-cp build/inkvt.armhf koboroot/.adds/inkvt/
-cp build/fbdepth koboroot/.adds/inkvt/
+$ git submodule update --init --recursive
+$ make kobo
+$ cp build/inkvt.armhf koboroot/.adds/inkvt/
+$ cp build/fbdepth koboroot/.adds/inkvt/
 ```
 
 Then copy the contents of the `koboroot/` directory to your kobo device:
  - `koboroot/.adds/inkvt` to `/.adds/inkvt`
  - `koboroot/inkvt.png` to `/inkvt.png`
  - `koboroot/inkvt.ini` to `/.adds/kfmon/config/inkvt.ini`
+
+You might want to add in a few extra binaries from [NiLuJe's repository](https://github.com/llandsmeer/inkvt/pull/2#issuecomment-605522605).
 
 Then restart your device and *read this:*
 When inkvt starts, it will start wifi (so before you start you must have a stable wifi connection)
