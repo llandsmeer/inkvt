@@ -53,7 +53,7 @@ public:
     int nticks_without_output = 0;
 
     itimerspec ts_on;
-    itimerspec ts_off = {0};
+    itimerspec ts_off = {};
     //ts.it_value.tv_nsec = 100*1000000;
     //ts.it_interval.tv_nsec = 100*1000000;
 

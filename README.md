@@ -11,34 +11,31 @@ If anything breaks, let me know!
 I'd like turn this into a stable piece of software eventually :)
 The kfmon/nickel interaction code is stolen from [KOReader](https://github.com/koreader/koreader)
 
-The installation assumes you have [kfmon](https://github.com/NiLuJe/kfmon) installed
+The installation assumes you have [KFMon](https://github.com/NiLuJe/kfmon) installed
 
 The `make kobo` target expects a working `arm-eabihf` cross-compiler.
 The Makefile by default assumes the cross-compilers in the apt standard repository to be present.
 This comprises the ubuntu `gcc-arm-linux-gnueabihf`, `libc6-dev-armhf-cross`, `g++-arm-linux-gnueabihf`  and `libstdc++-4.8-dev-armhf-cross`
-packages.
-The [Linaro toolchain](https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/)
-might work too, as that seems to be the one the Kobo team uses.
-Then update the `CROSS_TC` variable in the Makefile.
+packages.  
+The [KOReader toolchains](https://github.com/koreader/koxtoolchain) are also supported,
+and will in fact be a much better fit for the target device than Ubuntu/Linaro/MG/Sourcery ones.
+This has been tested with the "kobo" one.
+You can also use the "nickel" one if you really want a crappier GCC version,
+whose only saving grace will be the ability to link against the STL dynamically.
+The Makefile will honor the `CROSS_TC` variable, which is setup by the env script as documented in koxtoolchain.
 
 ```
 $ sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
 $ git clone 'https://github.com/llandsmeer/inkvt'
 $ cd inkvt
 $ git submodule update --init --recursive
-$ make kobo
-$ cp build/inkvt.armhf koboroot/.adds/inkvt/
-$ cp build/fbdepth koboroot/.adds/inkvt/
+$ make clean && make release
 ```
 
-Then copy the contents of the `koboroot/` directory to your kobo device:
- - `koboroot/.adds/inkvt` to `/.adds/inkvt`
- - `koboroot/inkvt.png` to `/inkvt.png`
- - `koboroot/inkvt.ini` to `/.adds/kfmon/config/inkvt.ini`
+Then, in a standard USBMS session, unpack the `InkVT-*.zip` archive to the root of your Kobo device.
+Eject & unplug it safely, and let it process the new InkVT "book".
 
-You might want to add in a few extra binaries from [NiLuJe's repository](https://github.com/llandsmeer/inkvt/pull/2#issuecomment-605522605).
-
-Then restart your device and *read this:*
+NOTE:
 When inkvt starts, it will start wifi (so before you start you must have a stable wifi connection)
 and wait 10 seconds.
 After that the actual inkvt binary is run.
@@ -48,6 +45,8 @@ This is the amount of time you have to move to the local network
 `http://ip:7800/` address shown on the screen.
 If you type here, your keystrokes are transfered to the device.
 Over *plain* http. Thats not secure!
+
+If you need more tools for your shell, check out [NiLuJe's repository](https://github.com/llandsmeer/inkvt/pull/2#issuecomment-605522605).
 
 # Inkvt
 
@@ -152,3 +151,5 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
+
+<!-- kate: indent-mode cstyle; indent-width 4; replace-tabs on; remove-trailing-spaces none; -->
