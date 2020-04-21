@@ -265,21 +265,21 @@ public:
         if (access(module_path, F_OK) == 0) {
             // Mk. 7+
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/configfs.ko", platform);
-            system(module_path);
+            (void)system(module_path);
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/libcomposite.ko", platform);
-            system(module_path);
+            (void)system(module_path);
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/u_serial.ko", platform);
-            system(module_path);
+            (void)system(module_path);
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/usb_f_acm.ko", platform);
-            system(module_path);
+            (void)system(module_path);
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/g_serial.ko", platform);
-            system(module_path);
+            (void)system(module_path);
         } else {
             // Older devices
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/arcotg_udc.ko", platform);
-            system(module_path);
+            (void)system(module_path);
             snprintf(module_path, sizeof(module_path), "insmod /drivers/%s/usb/gadget/g_serial.ko", platform);
-            system(module_path);
+            (void)system(module_path);
         }
 
         // Sleep a bit to leave the kernel time to breathe, because everything is terrible

@@ -29,6 +29,8 @@
 #include "./buffers.hpp"
 #include "./rivalapp.hpp"
 
+#include "../cxxopts/include/cxxopts.hpp"
+
 #ifndef GITHASH
 #define GITHASH "<unknown>"
 #endif
@@ -92,22 +94,43 @@ void print_listen_adresses(Buffers & buffers) {
     freeifaddrs(ifaddr);
 }
 
-int main() {
+int main(int argc, char ** argv) {
+    cxxopts::Options arg_options("inkvt", "VT100 terminal for E-ink devices");
+    arg_options.add_options()
+        ("h,help", "Print usage")
+        ("no-reinit", "Do not issue fbink_reinit() calls (assume no plato/nickel running)", cxxopts::value<bool>()->default_value("false"))
+        ("serial", "Load g_serial and listen on serial (might break usbms until reboot)", cxxopts::value<bool>()->default_value("false"))
+        ("no-http", "Do not listen on http", cxxopts::value<bool>()->default_value("false"))
+        ("no-timeout", "Do not exit after 20 seconds of no input", cxxopts::value<bool>()->default_value("false"))
+        ("no-signals", "Do not catch signals", cxxopts::value<bool>()->default_value("false"))
+    ;
+    auto arg_result = arg_options.parse(argc, argv);
+    if (arg_result.count("help")) {
+        std::cout << arg_options.help() << std::endl;
+        exit(0);
+    }
     Buffers buffers;
     pty.setup();
     vterm.setup();
+    if (!arg_result["no-reinit"].as<bool>()) {
+        vterm.reinit_on_damage = true;
+    }
     inputs.add_progout(pty.master);
-#ifdef INPUT_SERIAL
-    inputs.add_serial();
-#endif
+    if (arg_result["serial"].as<bool>()) {
+        inputs.add_serial();
+    }
 #ifdef INPUT_EVDEV
     inputs.add_evdev();
 #else
     inputs.add_ttyraw();
 #endif
-    inputs.add_signals();
-    if (inputs.add_http(7800) < 0) {
-        deque_printf(buffers.vt100_in, "http server setup failed\r\n", GITHASH);
+    if (!arg_result["no-signals"].as<bool>()) {
+        inputs.add_signals();
+    }
+    if (!arg_result["no-http"].as<bool>()) {
+        if (inputs.add_http(7800) < 0) {
+            deque_printf(buffers.vt100_in, "http server setup failed\r\n", GITHASH);
+        }
     }
     inputs.add_vterm_timer(vterm.timerfd, &vterm);
     atexit(handle_atexit);
@@ -116,9 +139,11 @@ int main() {
     if (inputs.is_listening_on_http()) {
         print_listen_adresses(buffers);
     }
-    int seconds = 20;
-    inputs.add_exit_after(seconds);
-    deque_printf(buffers.vt100_in, "waiting %d seconds on input\r\n", seconds);
+    if (!arg_result["no-timeout"].as<bool>()) {
+        int seconds = 20;
+        inputs.add_exit_after(seconds);
+        deque_printf(buffers.vt100_in, "waiting %d seconds on input\r\n", seconds);
+    }
 #if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
     rivalapps = RivalApp::search();
     if (rivalapps.size() > 0) {
