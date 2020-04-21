@@ -31,13 +31,8 @@ endif
 
 LDFLAGS+=-lm -Lbuild -lutil
 
-all: tracexec linux kobo
-.PHONY: tracexec linux kobo clean all
-
-build/tsyscall.x:
-	mkdir -p build
-	gcc src/tsyscall.cpp -Wall -masm=intel -falign-labels=8 -Wno-unused-value -o build/tsyscall.x86
-	$(CROSS_TC)-gcc src/tsyscall.cpp -Wall -falign-labels=8 -Wno-unused-value -o build/tsyscall.x
+all: linux kobo
+.PHONY: linux kobo clean all
 
 src/_kbsend.hpp: src/kbsend.html
 	xxd -i src/kbsend.html > src/_kbsend.hpp || echo "install xxd to update src/_kbsend.hpp"

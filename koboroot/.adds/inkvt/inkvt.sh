@@ -23,6 +23,11 @@ INKVT_DIR="${0%/*}"
 # KFMon ships a minimal FBInk CLI
 FBINK_BIN="/usr/local/kfmon/bin/fbink"
 
+if [ ! -f ${FBINK_BIN} ]; then
+    echo 'KFMon fbink not found, defaulting to echo (?)'
+    FBINK_BIN=echo
+fi
+
 cd "${INKVT_DIR}" || exit
 
 export FROM_NICKEL="false"
@@ -41,6 +46,11 @@ if [ "${FROM_NICKEL}" = "true" ]; then
     export DBUS_SESSION_BUS_ADDRESS NICKEL_HOME WIFI_MODULE LANG WIFI_MODULE_PATH INTERFACE
     sync
     killall -TERM nickel hindenburg sickel fickel fmon 2>/dev/null
+else
+    echo Not running from Nickel/kfmon!
+    echo In general, there could be some interference between whatever is running and inkvt
+    echo You should run the inkvt binary directly in this case
+    exit 1
 fi
 
 if [ -z "${PRODUCT}" ]; then
