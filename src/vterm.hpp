@@ -71,7 +71,6 @@ public:
             full_refresh.end_col = state.max_cols;
             full_refresh.end_row = state.max_rows;
             term_damage(full_refresh, this);
-            term_movecursor(last_cursor, last_cursor, 1, this);
         }
         if (nwrites_in_interval == 0) {
             nticks_without_output += 1;
@@ -114,6 +113,17 @@ public:
             }
         }
         // drawing stuff
+        VTermScreenCell cell;
+        vterm_screen_get_cell(screen, pos, &cell);
+        config.col = pos.col;
+        config.row = pos.row;
+        if (pos.row == last_cursor.row && pos.col == last_cursor.col) {
+            update_fg_color(&cell.bg);
+            update_bg_color(&cell.fg);
+        } else {
+            update_fg_color(&cell.fg);
+            update_bg_color(&cell.bg);
+        }
         VTermRect rect;
         rect.start_row = pos.row;
         rect.start_col = pos.col;
@@ -156,13 +166,8 @@ public:
             for (col = rect.start_col; col < rect.end_col; col++) {
                 pos.col = col;
                 pos.row = row;
-                me->config.col = col;
-                me->config.row = row;
-                vterm_screen_get_cell(me->screen, pos, &cell);
                 // NOTE: And again after the print call
                 // if (cell.attrs.reverse) me->config->is_inverted = !me->config->is_inverted;
-                me->update_fg_color(&cell.fg);
-                me->update_bg_color(&cell.bg);
                 me->output_char(pos);
             }
         }
@@ -181,22 +186,8 @@ public:
         me->last_cursor = pos; // keep track of cursor in high_throughput_mode
         if (me->high_throughput_mode) return 1;
         VTermScreenCell cell;
-
-        // remove previous cursor
-        vterm_screen_get_cell(me->screen, old, &cell);
-        me->config.col = old.col;
-        me->config.row = old.row;
-        me->update_fg_color(&cell.fg);
-        me->update_bg_color(&cell.bg);
-        me->output_char(old);
-
-        // add new cursor
-        vterm_screen_get_cell(me->screen, pos, &cell);
-        me->config.col = pos.col;
-        me->config.row = pos.row;
-        me->update_fg_color(&cell.bg); // NOTE: fb and bg inverted
-        me->update_bg_color(&cell.fg); // for color inversion
-        me->output_char(pos);
+        me->output_char(old); // remove previous cursor
+        me->output_char(pos); // add new cursor
         return 1;
     }
 
