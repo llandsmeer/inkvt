@@ -25,10 +25,6 @@ else
 	CXXFLAGS += -std=gnu++17
 endif
 
-ifdef INPUT_EVDEV
-	CPPFLAGS += -DINPUT_EVDEV
-endif
-
 ifdef INPUT_SERIAL
 	CPPFLAGS += -DINPUT_SERIAL
 endif
@@ -51,9 +47,6 @@ linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	g++ $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS)
 ifneq ("$(DEBUG)","true")
 	strip --strip-unneeded build/inkvt.host
-endif
-ifeq ($(INPUT_EVDEV),"true")
-	g++ $(CPPFLAGS) $(CXXFLAGS) src/evdev2serial.cpp -o build/evdev2serial.x86 $(LDFLAGS)
 endif
 
 kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp

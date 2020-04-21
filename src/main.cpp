@@ -21,13 +21,11 @@
 #include <netdb.h>
 #include <ifaddrs.h>
 
-#include "./netev.hpp"
 #include "./input.hpp"
 #include "./pseudotty.hpp"
 #include "./vterm.hpp"
 #include "./_keymap.hpp"
 #include "./buffers.hpp"
-#include "./rivalapp.hpp"
 
 #include "../cxxopts/include/cxxopts.hpp"
 
@@ -39,26 +37,10 @@ Inputs inputs;
 PseudoTTY pty;
 VTermToFBInk vterm;
 KeycodeTranslation keytrans;
-#if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
-// WARNING: Enabling this is VERY experimental
-// I tried to use tracexec (simpler case) on my kobo
-// and it failed. I think I have to rewrite some of the
-// arm specific syscall handing code...
-// RivalApps: Starve nickle, koreader or anything reading
-// from /dev/input/event{0,1,2} from input and SIGSTOP them
-// Problem: we ungrab their evdev devices, but don't know
-// which ones to give back, so we grab none for them
-std::vector<RivalApp> rivalapps;
-#endif
 
 void handle_atexit() {
     puts("atexit_called");
     inputs.atexit();
-#if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
-    for (RivalApp & rivalapp : rivalapps) {
-        rivalapp.give_back_control();
-    }
-#endif
 }
 
 void deque_printf(std::deque<char> & out, const char * fmt, ...) {
@@ -119,11 +101,7 @@ int main(int argc, char ** argv) {
     if (arg_result["serial"].as<bool>()) {
         inputs.add_serial();
     }
-#ifdef INPUT_EVDEV
-    inputs.add_evdev();
-#else
     inputs.add_ttyraw();
-#endif
     if (!arg_result["no-signals"].as<bool>()) {
         inputs.add_signals();
     }
@@ -144,42 +122,13 @@ int main(int argc, char ** argv) {
         inputs.add_exit_after(seconds);
         deque_printf(buffers.vt100_in, "waiting %d seconds on input\r\n", seconds);
     }
-#if defined(TARGET_KOBO) && defined(EXPERIMENTAL)
-    rivalapps = RivalApp::search();
-    if (rivalapps.size() > 0) {
-        for (RivalApp & rival : rivalapps) {
-            deque_printf(buffers.vt100_in, "Taking over [%d] %s\r\n", rival.pid, rival.cmdline.c_str());
-            rival.takeover();
-        }
-    }
-#endif
     for (;;) {
         inputs.wait(buffers);
-#ifdef INPUT_EVDEV
-        while (buffers.serial.size() >= netev_size) {
-            struct input_event ev;
-            if (netev_read(buffers.serial.data(), ev)) {
-                // remove inital netev_size items
-                std::vector<char>(buffers.serial.begin()+netev_size, buffers.serial.end()).swap(buffers.serial);
-                if(ev.type == EV_KEY) {
-                    if (ev.value == 1 || ev.value == 2) {
-                        buffers.scancodes.push_back(ev.code | 0x100);
-                    } else if(ev.value == 0) {
-                        buffers.scancodes.push_back(ev.code | 0);
-                    }
-                }
-            } else {
-                // magic check failed, discard some data and try again
-                buffers.serial.erase(buffers.serial.begin());
-            }
-        }
-#else
         while (buffers.serial.size() > 0) {
             int c = buffers.serial.front();
             buffers.serial.pop_front();
             buffers.keyboard.push_back(c);
         }
-#endif
         while (buffers.scancodes.size() > 0) {
             int c = buffers.scancodes.front();
             buffers.scancodes.pop_front();

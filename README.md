@@ -90,30 +90,14 @@ To send keyboard input, there are 3 options:
    It requires that you're on the same (wifi) network, so for example, the builtin
    phone hotspot or a common wifi router.
    Also, android keyinput is extremely buggy...
- - (disabled by default) `screen /dev/ttyACM0 9600` (this requires a Mk. 7+ device, or a self-built g_serial module):
-
-# Alternative input method (evdev & evdev over serial)
-
-Before tty raw input, I build a keyboard input system around evdev.
-That's a lot less portable than tty raw input, and will probably be obsoleted somewhere in
-the future.
-Nevertheless, if you need this, passing `INPUT_EVDEV=true` to make should generate 3 binaries:
-
- - `build/inkvt.armhf`: inkvt built for kobo.
-    Sets up serial over USB and listens to `/dev/input/event*` and `/dev/ttyGS0` for evdev
-    input.
- - `build/evdev2serial.x86`: listens to evdev devices and send `EV_KEY` events to `/dev/ttyACM0`.
- - `build/inkvt.host`: inkvt built for linux framebuffer (for development). Listens to `/dev/input/event*`.
-    Only usable from linux console (eg. <kbd>Ctrl+Super+F3</kbd>).
-
-So to run, copy `./build/inkvt.armhf` to `/mnt/onboard`, SSH into the Kobo device and run `./inkvt.armhf`.
-Then, connect USB and run `sudo ./build/evdev2serial.x86` from linux.
+ - (via `--serial`): `screen /dev/ttyACM0 9600` (this requires a Mk. 7+ device, or a self-built g_serial module):
 
 # OTA
 
-For development, I found the follow workflow eases deployment:
+For *development*, I found the follow workflow eases deployment:
 Run `python3 -m http.server` from the `inkvt/build` directory.
 Then after each `make`, just `wget` on the Kobo side.
+For installation, use copying to the internal sd over USB via Nickel.
 
 # Todo
 
