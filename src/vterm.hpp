@@ -44,8 +44,6 @@ public:
     VTermScreen * screen;
     VTermScreenCallbacks vtsc;
 
-    bool reinit_on_damage = false;
-
     // timer to detect huge output streams
     int timerfd = -1;
     long nwrites_in_interval = 0;
@@ -82,6 +80,20 @@ public:
             nticks_without_output = 0;
         }
         nwrites_in_interval = 0;
+    }
+
+    bool reinit() {
+        // only call this from main (yeah bad code...)
+        // because we need to resize the pty too
+        int res = fbink_reinit(fbfd, &config);
+        if ((res == OK_BPP_CHANGE) || (res == OK_ROTA_CHANGE)) {
+            /* if both changed, OK_BPP_CHANGE `wins' */
+            fbink_get_state(&config, &state);
+            printf("fbink_reinit()\n");
+            vterm_set_size(term, state.max_rows, state.max_cols);
+            return true;
+        }
+        return false;
     }
 
     void update_fg_color(VTermColor * c) {
@@ -145,20 +157,10 @@ public:
 
     static int term_damage(VTermRect rect, void * user) {
         VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
-        VTermScreenCell cell;
         VTermPos pos;
         int row, col;
 
-        if (me->reinit_on_damage) {
-            int res = fbink_reinit(me->fbfd, &me->config);
-            if ((res == OK_BPP_CHANGE) | (res == OK_ROTA_CHANGE)) {
-                /* if both changed, OK_BPP_CHANGE `wins' */
-                fbink_get_state(&me->config, &me->state);
-                printf("fbink_reinit()\n");
-            }
-        }
-
-        //fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
+        // fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
         // NOTE: Optimize large rects by only doing a single refresh call, instead of paired with cell-per-cell drawing.
         me->config.no_refresh = true;
 
@@ -185,7 +187,6 @@ public:
         VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
         me->last_cursor = pos; // keep track of cursor in high_throughput_mode
         if (me->high_throughput_mode) return 1;
-        VTermScreenCell cell;
         me->output_char(old); // remove previous cursor
         me->output_char(pos); // add new cursor
         return 1;

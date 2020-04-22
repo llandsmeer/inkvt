@@ -94,8 +94,9 @@ int main(int argc, char ** argv) {
     Buffers buffers;
     pty.setup();
     vterm.setup();
+    bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
-        vterm.reinit_on_damage = true;
+        reinit_on_damage = true;
     }
     inputs.add_progout(pty.master);
     if (arg_result["serial"].as<bool>()) {
@@ -124,6 +125,11 @@ int main(int argc, char ** argv) {
     }
     for (;;) {
         inputs.wait(buffers);
+        if (reinit_on_damage) {
+            if (vterm.reinit()) {
+                pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
+            }
+        }
         while (buffers.serial.size() > 0) {
             int c = buffers.serial.front();
             buffers.serial.pop_front();
