@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <sys/timerfd.h>
 #include <iostream>
+#include <string.h>
 
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
@@ -222,19 +223,48 @@ public:
         return 0;
     }
 
-    void setup() {
+    static FONT_INDEX_E get_font(const char * font_cstr) {
+        std::string font(font_cstr);
+        if (font == "ibm") return FONT_INDEX_E::IBM;
+        else if (font == "unscii") return FONT_INDEX_E::UNSCII;
+        else if (font == "unscii_alt") return FONT_INDEX_E::UNSCII_ALT;
+        else if (font == "unscii_thin") return FONT_INDEX_E::UNSCII_THIN;
+        else if (font == "unscii_fantasy") return FONT_INDEX_E::UNSCII_FANTASY;
+        else if (font == "unscii_mcr") return FONT_INDEX_E::UNSCII_MCR;
+        else if (font == "unscii_tall") return FONT_INDEX_E::UNSCII_TALL;
+        else if (font == "block") return FONT_INDEX_E::BLOCK;
+        else if (font == "leggie") return FONT_INDEX_E::LEGGIE;
+        else if (font == "veggie") return FONT_INDEX_E::VEGGIE;
+        else if (font == "kates") return FONT_INDEX_E::KATES;
+        else if (font == "fkp") return FONT_INDEX_E::FKP;
+        else if (font == "ctrld") return FONT_INDEX_E::CTRLD;
+        else if (font == "orp") return FONT_INDEX_E::ORP;
+        else if (font == "orpb") return FONT_INDEX_E::ORPB;
+        else if (font == "orpi") return FONT_INDEX_E::ORPI;
+        else if (font == "scientifica") return FONT_INDEX_E::SCIENTIFICA;
+        else if (font == "scientificab") return FONT_INDEX_E::SCIENTIFICAB;
+        else if (font == "scientificai") return FONT_INDEX_E::SCIENTIFICAI;
+        else if (font == "terminus") return FONT_INDEX_E::TERMINUS;
+        else if (font == "terminusb") return FONT_INDEX_E::TERMINUSB;
+        else if (font == "fatty") return FONT_INDEX_E::FATTY;
+        else if (font == "spleen") return FONT_INDEX_E::SPLEEN;
+        else if (font == "tewi") return FONT_INDEX_E::TEWI;
+        else if (font == "tewib") return FONT_INDEX_E::TEWIB;
+        else if (font == "topaz") return FONT_INDEX_E::TOPAZ;
+        else if (font == "microknight") return FONT_INDEX_E::MICROKNIGHT;
+        else if (font == "vga") return FONT_INDEX_E::VGA;
+        printf("requesting non-existing font '%s'\n", font_cstr);
+        return FONT_INDEX_E::TERMINUS;
+    }
+
+    void setup(int fontmult=2, const char * fontname="terminus") {
         fbfd = fbink_open();
         if (fbfd == -1) {
             puts("fbink_open()");
             exit(1);
         }
-        // TODO: Making the font & size configurable might be nice ;).
-        config.fontname = FONT_INDEX_E::TERMINUS;
-#ifdef TARGET_KOBO
-        config.fontmult = 2;
-#else
-        config.fontmult = 1;
-#endif
+        config.fontname = get_font(fontname);
+        config.fontmult = fontmult;
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);

@@ -85,6 +85,9 @@ int main(int argc, char ** argv) {
         ("no-http", "Do not listen on http", cxxopts::value<bool>()->default_value("false"))
         ("no-timeout", "Do not exit after 20 seconds of no input", cxxopts::value<bool>()->default_value("false"))
         ("no-signals", "Do not catch signals", cxxopts::value<bool>()->default_value("false"))
+        ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight or vga",
+            cxxopts::value<std::string>()->default_value("terminus"))
+        ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
     ;
     auto arg_result = arg_options.parse(argc, argv);
     if (arg_result.count("help")) {
@@ -93,14 +96,17 @@ int main(int argc, char ** argv) {
     }
     Buffers buffers;
     pty.setup();
-    vterm.setup();
+    std::string fontname = arg_result["fontname"].as<std::string>();
+    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;
     }
     inputs.add_progout(pty.master);
     if (arg_result["serial"].as<bool>()) {
-        inputs.add_serial();
+        if (inputs.add_serial()) {
+            deque_printf(buffers.vt100_in, "reading from serial\r\n", GITHASH);
+        }
     }
     inputs.add_ttyraw();
     if (!arg_result["no-signals"].as<bool>()) {

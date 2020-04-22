@@ -237,7 +237,7 @@ public:
         this->vterm = vterm;
     }
 
-    void add_serial() {
+    bool add_serial() {
 #ifdef TARGET_KOBO
         // NOTE: Do our best to make this mostly portable...
         //       See http://trac.ak-team.com/trac/browser/niluje/Configs/trunk/Kindle/Kobo_Hacks/KoboStuff/src/usr/local/stuff/bin/usbnet-toggle.sh for a similar example.
@@ -249,7 +249,7 @@ public:
         // NOTE: We could also compute that from FBInk's state via device_platform, although that's not a 1:1 mapping...
         if (platform == NULL) {
             puts("add_serial() is only supported on Kobo devices with a proper PLATFORM set in the env!");
-            return;
+            return false;
         }
 
         char module_path[PATH_MAX] = { 0 };
@@ -257,7 +257,7 @@ public:
         snprintf(module_path, sizeof(module_path), "/drivers/%s/usb/gadget/g_serial.ko", platform);
         if (access(module_path, F_OK) != 0) {
             puts("add_serial() is only supported on Kobo devices with a g_serial kernel module!");
-            return;
+            return false;
         }
 
         // Cheap Mk. 7+ detection...
@@ -293,12 +293,15 @@ public:
             fds[nfds++].fd = fd;
             puts("opening /dev/ttyGS0");
             setup_serial(fd);
+            return true;
         } else {
             printf("couldn't open /dev/ttyGS0: %m\n");
+            return false;
         }
 #else
         puts("add_serial() is only supported on Kobo devices");
 #endif
+        return false;
     }
 
     int add_http(int port) {
