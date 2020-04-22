@@ -98,7 +98,19 @@ fi
 echo "Switching fb bitdepth to 8bpp & rotation to Portrait" >>crash.log 2>&1
 ./fbdepth -d 8 -r -1 >>crash.log 2>&1
 
-./inkvt.armhf >> crash.log 2>&1
+# inkvt Usage:
+#   inkvt [OPTION...]
+# 
+#   -h, --help        Print usage
+#       --no-reinit   Do not issue fbink_reinit() calls (assume no plato/nickel
+#                     running)
+#       --serial      Load g_serial and listen on serial (might break usbms
+#                     until reboot)
+#       --no-http     Do not listen on http
+#       --no-timeout  Do not exit after 20 seconds of no input
+#       --no-signals  Do not catch signals
+
+./inkvt.armhf --no-reinit >> crash.log 2>&1
 RETURN_VALUE=$?
 
 echo "Restoring original fb bitdepth @ ${ORIG_FB_BPP}bpp & rotation @ ${ORIG_FB_ROTA}" >>crash.log 2>&1
