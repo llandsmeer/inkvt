@@ -91,6 +91,7 @@ public:
             /* we only actually care about layout changes */
             fbink_get_state(&config, &state);
             printf("fbink_reinit()\n");
+            vterm_screen_reset(screen, 1);
             vterm_set_size(term, state.max_rows, state.max_cols);
             return true;
         }
