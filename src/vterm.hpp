@@ -87,8 +87,8 @@ public:
         // only call this from main (yeah bad code...)
         // because we need to resize the pty too
         int res = fbink_reinit(fbfd, &config);
-        if ((res == OK_BPP_CHANGE) || (res == OK_ROTA_CHANGE)) {
-            /* if both changed, OK_BPP_CHANGE `wins' */
+        if (res > EXIT_SUCCESS && res & OK_LAYOUT_CHANGE) {
+            /* we only actually care about layout changes */
             fbink_get_state(&config, &state);
             printf("fbink_reinit()\n");
             vterm_set_size(term, state.max_rows, state.max_cols);
