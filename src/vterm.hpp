@@ -87,10 +87,11 @@ public:
         // only call this from main (yeah bad code...)
         // because we need to resize the pty too
         int res = fbink_reinit(fbfd, &config);
-        if ((res == OK_BPP_CHANGE) || (res == OK_ROTA_CHANGE)) {
-            /* if both changed, OK_BPP_CHANGE `wins' */
+        if (res > EXIT_SUCCESS && res & OK_LAYOUT_CHANGE) {
+            /* we only actually care about layout changes */
             fbink_get_state(&config, &state);
             printf("fbink_reinit()\n");
+            vterm_screen_reset(screen, 1);
             vterm_set_size(term, state.max_rows, state.max_cols);
             return true;
         }
@@ -253,6 +254,12 @@ public:
         else if (font == "topaz") return FONT_INDEX_E::TOPAZ;
         else if (font == "microknight") return FONT_INDEX_E::MICROKNIGHT;
         else if (font == "vga") return FONT_INDEX_E::VGA;
+        /*
+        // Not compiled in by default
+        else if (font == "unifont") return FONT_INDEX_E::UNIFONT;
+        else if (font == "unifontdw") return FONT_INDEX_E::UNIFONTDW;
+        */
+        else if (font == "cozette") return FONT_INDEX_E::COZETTE;
         printf("requesting non-existing font '%s'\n", font_cstr);
         return FONT_INDEX_E::TERMINUS;
     }

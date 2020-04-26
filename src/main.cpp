@@ -85,7 +85,7 @@ int main(int argc, char ** argv) {
         ("no-http", "Do not listen on http", cxxopts::value<bool>()->default_value("false"))
         ("no-timeout", "Do not exit after 20 seconds of no input", cxxopts::value<bool>()->default_value("false"))
         ("no-signals", "Do not catch signals", cxxopts::value<bool>()->default_value("false"))
-        ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight or vga",
+        ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight, vga or cozette",
             cxxopts::value<std::string>()->default_value("terminus"))
         ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
     ;
