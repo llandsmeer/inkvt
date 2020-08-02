@@ -20,7 +20,7 @@ PATH="/sbin:/bin:/usr/sbin:/usr/bin:/usr/lib:"
 export LD_LIBRARY_PATH="/usr/local/Kobo"
 
 cd /
-unset OLDPWD FROM_NICKEL LC_ALL
+unset OLDPWD LC_ALL
 
 (
     if [ "${PLATFORM}" = "freescale" ] || [ "${PLATFORM}" = "mx50-ntx" ] || [ "${PLATFORM}" = "mx6sl-ntx" ]; then
@@ -30,7 +30,12 @@ unset OLDPWD FROM_NICKEL LC_ALL
 ) &
 
 if lsmod | grep -q sdio_wifi_pwr; then
-    killall restore-wifi-async.sh enable-wifi.sh obtain-ip.sh udhcpc default.script wpa_supplicant 2>/dev/null
+    killall -q -TERM enable-wifi.sh
+    cp -a "/etc/resolv.conf" "/tmp/resolv.ink"
+    dhcpcd -d -k "${INTERFACE}"
+    killall -q -TERM udhcpc default.script
+    mv -f "/tmp/resolv.ink" "/etc/resolv.conf"
+    wpa_cli terminate
     [ "${WIFI_MODULE}" != "8189fs" ] && [ "${WIFI_MODULE}" != "8192es" ] && wlarm_le -i "${INTERFACE}" down
     ifconfig "${INTERFACE}" down
     usleep 250000
