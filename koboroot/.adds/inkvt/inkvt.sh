@@ -18,7 +18,11 @@
 
 export LC_ALL="en_US.UTF-8"
 
-INKVT_DIR="${0%/*}"
+# Compute our working directory in an extremely defensive manner
+INKVT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)"
+
+# We rely on starting from our working directory, and it needs to be set, sane and absolute.
+cd "${INKVT_DIR:-/dev/null}" || exit
 
 # KFMon ships a minimal FBInk CLI
 FBINK_BIN="/usr/local/kfmon/bin/fbink"
@@ -28,24 +32,41 @@ if [ ! -f ${FBINK_BIN} ]; then
     FBINK_BIN=echo
 fi
 
-cd "${INKVT_DIR}" || exit
-
-export FROM_NICKEL="false"
+VIA_NICKEL="false"
 if pkill -0 nickel; then
-    FROM_NICKEL="true"
+    VIA_NICKEL="true"
 fi
 
-if [ "${FROM_NICKEL}" = "true" ]; then
+if [ "${VIA_NICKEL}" = "true" ]; then
     FROM_KFMON="false"
     if pkill -0 kfmon; then
-        if [ "$(pidof kfmon)" -eq "${PPID}" ]; then
+        if [ "$(pidof -s kfmon)" -eq "${PPID}" ]; then
             FROM_KFMON="true"
         fi
     fi
-    eval "$(xargs -n 1 -0 <"/proc/$(pidof nickel)/environ" | grep -e DBUS_SESSION_BUS_ADDRESS -e NICKEL_HOME -e WIFI_MODULE -e LANG -e WIFI_MODULE_PATH -e INTERFACE 2>/dev/null)"
-    export DBUS_SESSION_BUS_ADDRESS NICKEL_HOME WIFI_MODULE LANG WIFI_MODULE_PATH INTERFACE
+
+    FROM_NICKEL="false"
+    if [ -n "${NICKEL_HOME}" ]; then
+        FROM_NICKEL="true"
+    fi
+
+    if [ "${FROM_NICKEL}" = "false" ]; then
+        export $(grep -s -E -e '^(DBUS_SESSION_BUS_ADDRESS|NICKEL_HOME|WIFI_MODULE|LANG|WIFI_MODULE_PATH|INTERFACE)=' "/proc/$(pidof -s nickel)/environ")
+    fi
+
     sync
-    killall -TERM nickel hindenburg sickel fickel fmon 2>/dev/null
+    killall -q -TERM nickel hindenburg sickel fickel adobehost dhcpcd-dbus dhcpcd fmon
+
+    kill_timeout=0
+    while pkill -0 nickel; do
+        # Stop waiting after 4s
+        if [ ${kill_timeout} -ge 15 ]; then
+            break
+        fi
+        usleep 250000
+        kill_timeout=$((kill_timeout + 1))
+    done
+    rm -f /tmp/nickel-hardware-status
 else
     echo Not running from Nickel/kfmon!
     echo In general, there could be some interference between whatever is running and inkvt
@@ -98,9 +119,15 @@ fi
 echo "Switching fb bitdepth to 8bpp & rotation to Portrait" >>crash.log 2>&1
 ./fbdepth -d 8 -r -1 >>crash.log 2>&1
 
+# If there aren't any DNS servers listed, append CloudFlare's
+if not grep -q '^nameserver' "/etc/resolv.conf"; then
+    echo "# Added by InkVT because your setup is broken" >>"/etc/resolv.conf"
+    echo "nameserver 1.1.1.1" >>"/etc/resolv.conf"
+fi
+
 # inkvt Usage:
 #   inkvt [OPTION...]
-# 
+#
 #   -h, --help        Print usage
 #       --no-reinit   Do not issue fbink_reinit() calls (assume no plato/nickel
 #                     running)
@@ -116,7 +143,7 @@ RETURN_VALUE=$?
 echo "Restoring original fb bitdepth @ ${ORIG_FB_BPP}bpp & rotation @ ${ORIG_FB_ROTA}" >>crash.log 2>&1
 ./fbdepth -d "${ORIG_FB_BPP}" -r "${ORIG_FB_ROTA}" >>crash.log 2>&1
 
-if [ "${FROM_NICKEL}" = "true" ]; then
+if [ "${VIA_NICKEL}" = "true" ]; then
     if [ "${FROM_KFMON}" != "true" ]; then
         ./nickel.sh &
     else
