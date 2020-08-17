@@ -28,6 +28,9 @@ sleep 1
 ifconfig "${INTERFACE}" up
 [ "${WIFI_MODULE}" != "8189fs" ] && [ "${WIFI_MODULE}" != "8192es" ] && wlarm_le -i "${INTERFACE}" up
 
-pidof wpa_supplicant >/dev/null ||
+pkill -0 wpa_supplicant ||
     env -u LD_LIBRARY_PATH \
-        wpa_supplicant -D wext -s -i "${INTERFACE}" -O /var/run/wpa_supplicant -c /etc/wpa_supplicant/wpa_supplicant.conf -B
+        wpa_supplicant -D wext -s -i "${INTERFACE}" -c /etc/wpa_supplicant/wpa_supplicant.conf -O /var/run/wpa_supplicant -B
+
+# And finally, request an IP ourselves, because we killed Nickel's master dhcpcd process
+dhcpcd -d -t 30 -w "${INTERFACE}"
