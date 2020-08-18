@@ -44,14 +44,13 @@ if lsmod | grep -q sdio_wifi_pwr; then
     rmmod sdio_wifi_pwr
 fi
 
+rm -f "/tmp/nickel-hardware-status"
+mkfifo "/tmp/nickel-hardware-status"
+
 sync
 
 /usr/local/Kobo/hindenburg &
 LIBC_FATAL_STDERR_=1 /usr/local/Kobo/nickel -platform kobo -skipFontLoad &
-udevadm trigger &
-
-if [ -e "/dev/mmcblk1p1" ]; then
-    echo sd add /dev/mmcblk1p1 >>/tmp/nickel-hardware-status &
-fi
+[ "${PLATFORM}" != "freescale" ] && udevadm trigger &
 
 return 0
