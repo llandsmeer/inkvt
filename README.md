@@ -56,7 +56,7 @@ The kernel that comes with the device doesn't support usb host mode,
 but it (OTG) is supported by the hardware. I use my laptop as host,
 which sends keystrokes over serial to the Kobo device via the `g_serial`
 loadable kernel module that *may* come with the device.
-This option is enabled by passing `INPUT_SERIAL=true` to make.
+This option is enabled by  the `--serial` command line flag (edit inkvtsh, around line 140).
 The other option is sending keystrokes over wifi, which doesn't require
 loading kernel modules and is more cross-platform (the default).
 
