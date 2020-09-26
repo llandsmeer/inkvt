@@ -99,8 +99,8 @@ int main(int argc, char ** argv) {
     Buffers buffers;
     pty.setup();
     std::string fontname = arg_result["fontname"].as<std::string>();
-    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     vterm.has_osk = arg_result["osk"].as<bool>();
+    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;

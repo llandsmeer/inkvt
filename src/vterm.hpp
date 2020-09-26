@@ -67,6 +67,7 @@ public:
     bool has_osk = false;
 
     int osk_height() {
+        if (!has_osk) return 0;
         int osk_height = 400;
         if (osk_height > (int)state.screen_height / 2) osk_height = state.screen_height/2;
         return osk_height;
