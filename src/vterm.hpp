@@ -19,6 +19,7 @@
 
 #include <algorithm>
 #include <sys/timerfd.h>
+#include <linux/fb.h>
 #include <iostream>
 #include <string.h>
 
@@ -42,6 +43,12 @@ constexpr int TIMER_SLEEP_MODE_THRESHOLD = 10;
 
 class VTermToFBInk {
     RoundedRect cursor;
+    struct {
+        bool SHIFT = 0;
+        bool CTRL = 0;
+        bool FN = 0;
+        bool ALT = 0;
+    } OSK;
 public:
     VTerm * term;
     VTermScreen * screen;
@@ -95,6 +102,26 @@ public:
 
     const char * click(int x, int y) {
         if (!has_osk) return "";
+        int tmp;
+        // still needs testing! (is this even needed?)
+        switch (state.current_rota) {
+            case FB_ROTATE_UR:
+                break;
+            case FB_ROTATE_CW:
+                tmp = y;
+                y = state.screen_width - x;
+                x = tmp;
+                break;
+            case FB_ROTATE_UD:
+                x = state.screen_width - x;
+                y = state.screen_height - y;
+                break;
+            case FB_ROTATE_CCW:
+                tmp = x;
+                x = state.screen_height - y;
+                y = tmp;
+                break;
+        }
         if (1) {
             short cfg_row = config.row;
             short cfg_col = config.col;
@@ -115,7 +142,36 @@ public:
         }
         int h = osk_height();
         int osk_y = state.screen_height - h;
-        const char * out = osk_press(state.screen_width, osk_height(), x, y - osk_y);
+        const kbkey * b = osk_press(state.screen_width, osk_height(), x, y - osk_y);
+        if (!b) return "";
+        switch (b->mod) {
+            case SHIFT:
+                OSK.SHIFT = 1;
+                return "";
+            case CTRL:
+                OSK.CTRL = 1;
+                return "";
+            case FN:
+                OSK.FN = 1;
+                return "";
+            case ALT:
+                OSK.ALT = 1;
+                return "";
+        }
+        const char * out = b->normal;
+        if (OSK.FN && strlen(b->fn) > 0) {
+            out = b->fn;
+        }
+        if (OSK.SHIFT && strlen(b->shift) > 0) {
+            out = b->shift;
+        }
+        if (OSK.CTRL) {
+            // TODO: implement this
+        }
+        if (OSK.ALT) {
+            // TODO: implement this
+        }
+        OSK.SHIFT = OSK.CTRL = OSK.ALT = OSK.FN = 0;
         return out;
     }
 
@@ -137,7 +193,6 @@ public:
             nticks_without_output = 0;
         }
         nwrites_in_interval = 0;
-        osk();
     }
 
     bool reinit() {
@@ -150,6 +205,7 @@ public:
             printf("fbink_reinit()\n");
             vterm_screen_reset(screen, 1);
             vterm_set_size(term, nrows(), ncols());
+            osk();
             return true;
         }
         return false;
@@ -365,5 +421,6 @@ public:
         ts_on.it_value.tv_nsec = INTERVAL_MS*1000000;
         ts_on.it_interval.tv_nsec = INTERVAL_MS*1000000;
         timerfd_settime(timerfd, 0, &ts_off, 0);
+        osk();
     }
 };

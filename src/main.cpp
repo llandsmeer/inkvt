@@ -150,7 +150,7 @@ int main(int argc, char ** argv) {
                 int x = inputs.istate.x;
                 int y = inputs.istate.y;
                 const char * kb = vterm.click(x, y);
-                for (int i = 0; i < strlen(kb); i++) {
+                for (unsigned i = 0; i < strlen(kb); i++) {
                     buffers.keyboard.push_back(kb[i]);
                 }
                 //deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
