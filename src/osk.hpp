@@ -6,7 +6,7 @@
 void osk_setup(int width, int height) {
     int blockw = width / OSK_W;
     int blockh = height / OSK_H;
-    int bpp = 3;
+    int bpp = 1;
     float radius = 10;
     float spacing = 10;
     for (int i = 0; i < OSK_NKEYS; i++) {
@@ -19,7 +19,7 @@ void osk_setup(int width, int height) {
     }
 }
 
-void osk_render(int fd, FBInkConfig * config, int width, int height) {
+void osk_render(int fd, FBInkConfig * config, int osk_y, int width, int height) {
     int blockw = width / OSK_W;
     int blockh = height / OSK_H;
     short cfg_row = config->row;
@@ -37,7 +37,7 @@ void osk_render(int fd, FBInkConfig * config, int width, int height) {
                 osk_keys[i].rrect.height,
                 osk_keys[i].rrect.width * osk_keys[i].rrect.height * osk_keys[i].rrect.bpp,
                 x,
-                y,
+                osk_y + y,
                 config
                 );
     }

@@ -19,24 +19,22 @@ public:
     float radius = 6;
     float spacing = 10;
     uint8_t color = 128;
-    uint8_t alpha = 128; // for even bpp
+    uint8_t alpha = 255; // for even bpp
 
     void render() {
         int len = width * height * bpp;
         dst = (uint8_t*)realloc(dst, len);
         float mx = width / 2., my = height / 2.;
         int bpp = len / (width * height);
-        int a = 0;
-        int b = 0;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 float dx = _clamp(_abs(mx - x) - (width - spacing)/2. + radius);
                 float dy = _clamp(_abs(my - y) - (height - spacing)/2. + radius);
                 bool inside = dx*dx + dy*dy < radius;
                 int idx = (y*width + x)*bpp;
-                if (inside) a++;
-                else b++;
-                for (int p = 0; p < (bpp & ~1); p++) {
+                // for uneven bpp, its either Y or RGB
+                // for even bpp, the last component is alpha
+                for (int p = 0; p < bpp; p++) { // could subtract 1 from even bpp
                     dst[idx+p] = inside ? color : 255;
                 }
                 if ((bpp & 1) == 0) {

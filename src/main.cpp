@@ -122,7 +122,7 @@ int main(int argc, char ** argv) {
     }
     inputs.add_vterm_timer(vterm.timerfd, &vterm);
     atexit(handle_atexit);
-    pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
+    pty.set_size(vterm.nrows(), vterm.ncols());
     deque_printf(buffers.vt100_in, "inkvt\r\nversion %s\r\n", GITHASH);
     if (inputs.is_listening_on_http()) {
         print_listen_adresses(buffers);
@@ -136,7 +136,7 @@ int main(int argc, char ** argv) {
         inputs.wait(buffers);
         if (reinit_on_damage) {
             if (vterm.reinit()) {
-                pty.set_size(vterm.state.max_rows, vterm.state.max_cols);
+                pty.set_size(vterm.nrows(), vterm.ncols());
             }
         }
         while (buffers.serial.size() > 0) {

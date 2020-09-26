@@ -66,10 +66,28 @@ public:
 
     bool has_osk = false;
 
+    int osk_height() {
+        int osk_height = 400;
+        if (osk_height > (int)state.screen_height / 2) osk_height = state.screen_height/2;
+        return osk_height;
+    }
+
+    int nrows() {
+        int kb_height = osk_height();
+        int line_height = state.screen_height / state.max_rows;
+        return (state.screen_height - kb_height) / line_height;
+    }
+
+    int ncols() {
+        return state.max_cols;
+    }
+
     void osk() {
         if (has_osk) {
-            osk_setup(state.screen_width, state.screen_height);
-            osk_render(fbfd, &config, state.screen_width, state.screen_height);
+            int h = osk_height();
+            int osk_y = state.screen_height - h;
+            osk_setup(state.screen_width, h);
+            osk_render(fbfd, &config, osk_y, state.screen_width, h);
         }
     }
 
@@ -77,8 +95,8 @@ public:
         if (high_throughput_mode && nwrites_in_interval < HIGH_THROUGHPUT_THRESHOLD) {
             high_throughput_mode = false;
             VTermRect full_refresh = { 0, 0, 0, 0};
-            full_refresh.end_col = state.max_cols;
-            full_refresh.end_row = state.max_rows;
+            full_refresh.end_col = ncols();
+            full_refresh.end_row = nrows();
             term_damage(full_refresh, this);
         }
         if (nwrites_in_interval == 0) {
@@ -103,7 +121,7 @@ public:
             fbink_get_state(&config, &state);
             printf("fbink_reinit()\n");
             vterm_screen_reset(screen, 1);
-            vterm_set_size(term, state.max_rows, state.max_cols);
+            vterm_set_size(term, nrows(), ncols());
             return true;
         }
         return false;
@@ -299,7 +317,7 @@ public:
             .sb_pushline = 0,
             .sb_popline = 0
         };
-        term = vterm_new(state.max_rows, state.max_cols);
+        term = vterm_new(nrows(), ncols());
         vterm_set_utf8(term, 1);
         screen = vterm_obtain_screen(term);
         vterm_screen_set_callbacks(screen, &vtsc, this);
