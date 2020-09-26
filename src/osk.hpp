@@ -29,7 +29,7 @@ void osk_render(int fd, FBInkConfig * config, int osk_y, int width, int height) 
     config->col = 0;
     for (int i = 0; i < OSK_NKEYS; i++) {
         int x = osk_keys[i].x * blockw;
-        int y  = osk_keys[i].y * blockh;
+        int y = osk_keys[i].y * blockh;
         // printf("%d %d %d %d %d\n", i, x, y, osk_keys[i].rrect.width, osk_keys[i].rrect.height);
         fbink_print_raw_data(
                 fd,
@@ -51,7 +51,7 @@ const char * osk_press(int width, int height, int x, int y) {
     int blockh = height / OSK_H;
     for (int i = 0; i < OSK_NKEYS; i++) {
         int kx = osk_keys[i].x * blockw;
-        int ky  = osk_keys[i].y * blockh;
+        int ky = osk_keys[i].y * blockh;
         int kw = osk_keys[i].rrect.width;
         int kh = osk_keys[i].rrect.height;
         if (x >= kx && x < kx + kw && y >= ky && y < ky + kh) {

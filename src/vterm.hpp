@@ -41,6 +41,7 @@ constexpr long HIGH_THROUGHPUT_THRESHOLD = 100000;
 constexpr int TIMER_SLEEP_MODE_THRESHOLD = 10;
 
 class VTermToFBInk {
+    RoundedRect cursor;
 public:
     VTerm * term;
     VTermScreen * screen;
@@ -94,6 +95,24 @@ public:
 
     const char * click(int x, int y) {
         if (!has_osk) return "";
+        if (1) {
+            short cfg_row = config.row;
+            short cfg_col = config.col;
+            config.row = 0;
+            config.col = 0;
+            fbink_print_raw_data(
+                    fbfd,
+                    cursor.dst,
+                    cursor.width,
+                    cursor.height,
+                    cursor.width * cursor.height * cursor.bpp,
+                    x - cursor.width / 2,
+                    y - cursor.height / 2,
+                    &config
+                    );
+            config.row = cfg_row;
+            config.col = cfg_col;
+        }
         int h = osk_height();
         int osk_y = state.screen_height - h;
         const char * out = osk_press(state.screen_width, osk_height(), x, y - osk_y);
@@ -303,6 +322,11 @@ public:
     }
 
     void setup(int fontmult=2, const char * fontname="terminus") {
+        cursor.width = 10;
+        cursor.height = 10;
+        cursor.spacing = 0;
+        cursor.radius = 5;
+        cursor.render();
         fbfd = fbink_open();
         if (fbfd == -1) {
             puts("fbink_open()");
