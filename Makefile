@@ -39,6 +39,7 @@ src/_kbsend.hpp: src/kbsend.html
 
 linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
+	python3 src/kblayout.py > src/_kblayout.hpp
 	g++ $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS)
 ifneq ("$(DEBUG)","true")
 	strip --strip-unneeded build/inkvt.host
@@ -46,6 +47,7 @@ endif
 
 kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
+	python3 src/kblayout.py > src/_kblayout.hpp
 	$(CROSS_TC)-g++ -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(STATIC_STL_FLAG)
 	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
@@ -70,8 +72,8 @@ build/libvterm_kobo.a:
 
 build/libfbink.a:
 	mkdir -p build
-	make -C FBInk clean
-	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u CXXFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true MINIMAL=true FONTS=true staticlib
+	make -C FBInk clean || (echo "TRY git submodule update --init --recursive"  && false)
+	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u CXXFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true MINIMAL=true FONTS=true IMAGE=true staticlib
 	cp FBInk/Release/libfbink.a build/libfbink.a
 
 build/libfbink_kobo.a:
@@ -87,7 +89,7 @@ build/fbdepth:
 	cp FBInk/Release/fbdepth build/fbdepth
 
 clean:
-	make -C FBInk clean
+	make -C FBInk clean  || (echo "TRY git submodule update --init --recursive"  && false)
 	make -f Makevterm clean
 	rm -fr build/
 	rm -f InkVT-*.zip

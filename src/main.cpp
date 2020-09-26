@@ -26,6 +26,7 @@
 #include "./vterm.hpp"
 #include "./_keymap.hpp"
 #include "./buffers.hpp"
+#include "./osk.hpp"
 
 #include "../cxxopts/include/cxxopts.hpp"
 
@@ -85,6 +86,7 @@ int main(int argc, char ** argv) {
         ("no-http", "Do not listen on http", cxxopts::value<bool>()->default_value("false"))
         ("no-timeout", "Do not exit after 20 seconds of no input", cxxopts::value<bool>()->default_value("false"))
         ("no-signals", "Do not catch signals", cxxopts::value<bool>()->default_value("false"))
+        ("osk", "Experimental OSK", cxxopts::value<bool>()->default_value("false"))
         ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight, vga or cozette",
             cxxopts::value<std::string>()->default_value("terminus"))
         ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
@@ -98,6 +100,7 @@ int main(int argc, char ** argv) {
     pty.setup();
     std::string fontname = arg_result["fontname"].as<std::string>();
     vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
+    vterm.has_osk = arg_result["osk"].as<bool>();
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;

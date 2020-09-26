@@ -24,6 +24,7 @@
 
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
+#include "./osk.hpp"
 
 // reset high_throughput_mode check every <n> ms
 constexpr int INTERVAL_MS = 100;
@@ -63,6 +64,15 @@ public:
     FBInkState state = { 0 };
     FBInkDump dump = { 0 };
 
+    bool has_osk = false;
+
+    void osk() {
+        if (has_osk) {
+            osk_setup(state.screen_width, state.screen_height);
+            osk_render(fbfd, &config, state.screen_width, state.screen_height);
+        }
+    }
+
     void tick() {
         if (high_throughput_mode && nwrites_in_interval < HIGH_THROUGHPUT_THRESHOLD) {
             high_throughput_mode = false;
@@ -81,6 +91,7 @@ public:
             nticks_without_output = 0;
         }
         nwrites_in_interval = 0;
+        osk();
     }
 
     bool reinit() {

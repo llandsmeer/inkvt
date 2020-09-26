@@ -20,3 +20,5 @@ __pycache__/
 /koboroot/.adds/inkvt/strace
 /koboroot/.adds/inkvt/tmux
 InkVT-*.zip
+.gdb_history
+peda-session-dash.txt
