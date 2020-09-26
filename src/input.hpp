@@ -47,6 +47,14 @@ class Inputs {
 public:
     Server server;
     bool had_input = 0;
+
+    struct {
+        int x = 0;
+        int y = 0;
+        int xev = 0;
+        int yev = 0;
+        int moved = 0;
+    } istate;
 private:
     enum fdtype {
         FD_EVDEV,
@@ -65,25 +73,21 @@ private:
     struct termios termios_reset = { 0 };
     VTermToFBInk * vterm = 0;
 
-    struct {
-        int x;
-        int y;
-        int moved;
-    } istate;
-
     void handle_evdev(Buffers & buffers, struct input_event ev) {
         int handled = 1;
         if (ev.type == EV_ABS) {
             if (ev.code == ABS_MT_POSITION_X && ev.value != 0) {
-                if (ev.value != istate.x) istate.moved = 1;
+                if (ev.value != istate.x) istate.moved += 1;
                 istate.x = ev.value;
+                istate.xev = 1;
                 handled = 1;
             } else if (ev.code == ABS_MT_POSITION_Y && ev.value != 0) {
-                if (ev.value != istate.y) istate.moved = 1;
+                if (ev.value != istate.y) istate.moved += 1;
                 istate.y = ev.value;
+                istate.yev = 1;
                 handled = 1;
             }
-        } else if(ev.type == EV_KEY) {
+        } else if(false && ev.type == EV_KEY) { // maybe I should just remove old evdev keyboard handling
             if (ev.value == 1 || ev.value == 2) {
                 buffers.scancodes.push_back(ev.code | 0x100);
                 handled = 1;

@@ -45,3 +45,18 @@ void osk_render(int fd, FBInkConfig * config, int osk_y, int width, int height) 
     config->row = cfg_row;
     config->col = cfg_col;
 }
+
+const char * osk_press(int width, int height, int x, int y) {
+    int blockw = width / OSK_W;
+    int blockh = height / OSK_H;
+    for (int i = 0; i < OSK_NKEYS; i++) {
+        int kx = osk_keys[i].x * blockw;
+        int ky  = osk_keys[i].y * blockh;
+        int kw = osk_keys[i].rrect.width;
+        int kh = osk_keys[i].rrect.height;
+        if (x >= kx && x < kx + kw && y >= ky && y < ky + kh) {
+            return osk_keys[i].normal;
+        }
+    }
+    return "";
+}

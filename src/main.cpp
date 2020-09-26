@@ -100,6 +100,9 @@ int main(int argc, char ** argv) {
     pty.setup();
     std::string fontname = arg_result["fontname"].as<std::string>();
     vterm.has_osk = arg_result["osk"].as<bool>();
+    if (vterm.has_osk) {
+        inputs.add_evdev();
+    }
     vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
@@ -137,6 +140,20 @@ int main(int argc, char ** argv) {
         if (reinit_on_damage) {
             if (vterm.reinit()) {
                 pty.set_size(vterm.nrows(), vterm.ncols());
+            }
+        }
+        if (vterm.has_osk) {
+            if (inputs.istate.xev && inputs.istate.yev) {
+                inputs.istate.xev = 0;
+                inputs.istate.yev = 0;
+                inputs.istate.moved = 0;
+                int x = inputs.istate.x;
+                int y = inputs.istate.y;
+                const char * kb = vterm.click(x, y);
+                for (int i = 0; i < strlen(kb); i++) {
+                    buffers.keyboard.push_back(kb[i]);
+                }
+                //deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
             }
         }
         while (buffers.serial.size() > 0) {

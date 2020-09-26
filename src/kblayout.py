@@ -25,7 +25,8 @@ special = {
     'Left': '\x1b[D',
     'Right': '\x1b[C',
     'Up': '\x1b[A',
-    'Down': '\x1b[B'
+    'Down': '\x1b[B',
+    'Space': ' '
 }
 
 

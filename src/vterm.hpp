@@ -92,6 +92,14 @@ public:
         }
     }
 
+    const char * click(int x, int y) {
+        if (!has_osk) return "";
+        int h = osk_height();
+        int osk_y = state.screen_height - h;
+        const char * out = osk_press(state.screen_width, osk_height(), x, y - osk_y);
+        return out;
+    }
+
     void tick() {
         if (high_throughput_mode && nwrites_in_interval < HIGH_THROUGHPUT_THRESHOLD) {
             high_throughput_mode = false;

@@ -82,7 +82,7 @@ struct kbkey osk_keys[61] = {
     { .mod = CTRL, .text = "Ctrl", .normal = "", .shift = "", .fn = "", .x = 0, .y = 4, .w = 1.25, .h = 1, },
     { .mod = FN, .text = "Fn", .normal = "", .shift = "", .fn = "", .x = 1.25, .y = 4, .w = 1.25, .h = 1, },
     { .mod = ALT, .text = "Alt", .normal = "", .shift = "", .fn = "", .x = 2.5, .y = 4, .w = 1.25, .h = 1, },
-    { .mod = NOMOD, .text = "Space", .normal = "Space", .shift = "", .fn = "", .x = 3.75, .y = 4, .w = 6.25, .h = 1, },
+    { .mod = NOMOD, .text = "Space", .normal = " ", .shift = " ", .fn = "", .x = 3.75, .y = 4, .w = 6.25, .h = 1, },
     { .mod = NOMOD, .text = "Left", .normal = "\033[D", .shift = "\033[D", .fn = "", .x = 10.0, .y = 4, .w = 1.25, .h = 1, },
     { .mod = NOMOD, .text = "Down", .normal = "\033[B", .shift = "\033[B", .fn = "", .x = 11.25, .y = 4, .w = 1.25, .h = 1, },
     { .mod = NOMOD, .text = "Up", .normal = "\033[A", .shift = "\033[A", .fn = "", .x = 12.5, .y = 4, .w = 1.25, .h = 1, },
