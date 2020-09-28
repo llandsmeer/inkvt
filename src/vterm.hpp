@@ -22,6 +22,7 @@
 #include <linux/fb.h>
 #include <iostream>
 #include <string.h>
+#include <sys/time.h>
 
 #include "../libvterm-0.1.3/include/vterm.h"
 #include "../FBInk/fbink.h"
@@ -62,6 +63,11 @@ public:
     bool timer_is_running = false;
     int nticks_without_output = 0;
 
+    // osk debounce
+    timeval osk_last_kp;
+    int osk_last_x = -100;
+    int osk_last_y = -100;
+
     itimerspec ts_on;
     itimerspec ts_off = {};
     //ts.it_value.tv_nsec = 100*1000000;
@@ -84,11 +90,22 @@ public:
     int nrows() {
         int kb_height = osk_height();
         int line_height = state.screen_height / state.max_rows;
-        return (state.screen_height - kb_height) / line_height;
+        return (state.screen_height - kb_height) / line_height - 1;
     }
 
     int ncols() {
         return state.max_cols;
+    }
+
+    void run_timer() {
+        // timer for output debouncing (high throughput mode)
+        if (timer_is_running || timerfd == -1 /* we get called before timerfd creation in setup */) {
+            return;
+        }
+        if (timerfd_settime(timerfd, 0, &ts_on, 0) >= 0) {
+            timer_is_running = true;
+            nticks_without_output = 0;
+        }
     }
 
     void osk() {
@@ -101,9 +118,8 @@ public:
     }
 
     const char * click(int x, int y) {
-        if (!has_osk) return "";
+        // screen rot handling. still needs testing! (is this even needed?)
         int tmp;
-        // still needs testing! (is this even needed?)
         switch (state.current_rota) {
             case FB_ROTATE_UR:
                 break;
@@ -122,7 +138,8 @@ public:
                 y = tmp;
                 break;
         }
-        if (1) {
+        // draw ugly cursor
+        if (0) {
             short cfg_row = config.row;
             short cfg_col = config.col;
             config.row = 0;
@@ -140,6 +157,21 @@ public:
             config.row = cfg_row;
             config.col = cfg_col;
         }
+        // debounce
+        if (!has_osk) return "";
+        timeval now;
+        gettimeofday(&now, 0);
+        double elapsedTime = (now.tv_sec - osk_last_kp.tv_sec) * 1000.0
+                           + (now.tv_usec - osk_last_kp.tv_usec) / 1000.0;
+        if (elapsedTime < 130 &&
+                abs(x - osk_last_x) < 50 && abs(y - osk_last_y) < 50
+                ) {
+            return "";
+        }
+        osk_last_x = x;
+        osk_last_y = y;
+        osk_last_kp = now;
+        // handle kp
         int h = osk_height();
         int osk_y = state.screen_height - h;
         const kbkey * b = osk_press(state.screen_width, osk_height(), x, y - osk_y);
@@ -233,11 +265,8 @@ public:
             if (nwrites_in_interval > HIGH_THROUGHPUT_THRESHOLD) {
                 high_throughput_mode = true;
             }
-        } else if (timerfd != -1 /* we get called before timerfd creation in setup */) {
-            if (timerfd_settime(timerfd, 0, &ts_on, 0) >= 0) {
-                timer_is_running = true;
-                nticks_without_output = 0;
-            }
+        } else {
+            run_timer();
         }
         // drawing stuff
         VTermScreenCell cell;
@@ -378,6 +407,7 @@ public:
     }
 
     void setup(int fontmult=2, const char * fontname="terminus") {
+        gettimeofday(&osk_last_kp, 0);
         cursor.width = 10;
         cursor.height = 10;
         cursor.spacing = 0;

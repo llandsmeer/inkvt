@@ -1,6 +1,6 @@
 GITHASH='"'$(shell git rev-parse --short HEAD)'"'
 
-# CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
+CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 CROSS_TC?=arm-linux-gnueabihf
 
 ifeq ("$(DEBUG)","true")
@@ -52,7 +52,7 @@ kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
 
-release: kobo
+release: clean kobo
 	mkdir -p Kobo/.adds/inkvt Kobo/.adds/kfmon/config
 	cp -av $(CURDIR)/build/inkvt.armhf Kobo/.adds/inkvt
 	cp -av $(CURDIR)/build/fbdepth Kobo/.adds/inkvt
@@ -79,7 +79,7 @@ build/libfbink.a:
 build/libfbink_kobo.a:
 	mkdir -p build
 	make -C FBInk clean
-	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true MINIMAL=true FONTS=true staticlib
+	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true MINIMAL=true FONTS=true IMAGE=true staticlib
 	cp FBInk/Release/libfbink.a build/libfbink_kobo.a
 
 build/fbdepth:

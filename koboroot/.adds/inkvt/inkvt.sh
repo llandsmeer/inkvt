@@ -125,19 +125,28 @@ if ! grep -q '^nameserver' "/etc/resolv.conf"; then
     echo "nameserver 1.1.1.1" >>"/etc/resolv.conf"
 fi
 
-# inkvt Usage:
+# VT100 terminal for E-ink devices
+# Usage:
 #   inkvt [OPTION...]
 #
-#   -h, --help        Print usage
-#       --no-reinit   Do not issue fbink_reinit() calls (assume no plato/nickel
-#                     running)
-#       --serial      Load g_serial and listen on serial (might break usbms
-#                     until reboot)
-#       --no-http     Do not listen on http
-#       --no-timeout  Do not exit after 20 seconds of no input
-#       --no-signals  Do not catch signals
+#   -h, --help          Print usage
+#       --no-reinit     Do not issue fbink_reinit() calls (assume no
+#                       plato/nickel running)
+#       --serial        Load g_serial and listen on serial (might break usbms
+#                       until reboot)
+#       --no-http       Do not listen on http
+#       --no-timeout    Do not exit after 20 seconds of no input
+#       --no-signals    Do not catch signals
+#       --osk           Experimental OSK
+#   -f, --fontname arg  FBInk Bitmap fontname, one of ibm, unscii, unscii_alt,
+#                       unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall,
+#                       block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi,
+#                       scientifica, scientificab, scientificai, terminus,
+#                       terminusb, fatty, spleen, tewi, tewib, topaz, microknight,
+#                       vga or cozette (default: terminus)
+#   -s, --fontsize arg  Fontsize multiplier (default: 2)
 
-./inkvt.armhf --no-reinit >> crash.log 2>&1
+./inkvt.armhf --no-reinit --no-http --osk >> crash.log 2>&1
 RETURN_VALUE=$?
 
 echo "Restoring original fb bitdepth @ ${ORIG_FB_BPP}bpp & rotation @ ${ORIG_FB_ROTA}" >>crash.log 2>&1

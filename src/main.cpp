@@ -149,11 +149,17 @@ int main(int argc, char ** argv) {
                 inputs.istate.moved = 0;
                 int x = inputs.istate.x;
                 int y = inputs.istate.y;
+#ifdef TARGET_KOBO
+                // KOBO FIX (WTF?):
+                int tmp = x;
+                x = vterm.state.screen_width - y;
+                y = tmp;
+#endif
                 const char * kb = vterm.click(x, y);
                 for (unsigned i = 0; i < strlen(kb); i++) {
                     buffers.keyboard.push_back(kb[i]);
                 }
-                //deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
+                // deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
             }
         }
         while (buffers.serial.size() > 0) {

@@ -1,6 +1,7 @@
 Experimental VT100 terminal emulator for the Kobo Libra H2O (and probably all targets supported by FBInk)
 
 <img src=it_works.jpeg width=800/>
+<img src=it_works2.png width=800/>
 
 # Install on Kobo
 
@@ -13,12 +14,12 @@ The kfmon/nickel interaction code is stolen from [KOReader](https://github.com/k
 
 The installation assumes you have [KFMon](https://github.com/NiLuJe/kfmon) installed
 
-The `make kobo` target expects a working `arm-eabihf` cross-compiler.
-The Makefile by default assumes the cross-compilers in the apt standard repository to be present.
+**IMPORTANT:** The `make kobo` target expects a working `arm-eabihf` cross-compiler.
+The Makefile by default assumes the cross-compilers in the apt standard repository to be present (which probably lead to strange glibc version mismatches and crashes).
 This comprises the ubuntu `gcc-arm-linux-gnueabihf`, `libc6-dev-armhf-cross`, `g++-arm-linux-gnueabihf`  and `libstdc++-4.8-dev-armhf-cross`
-packages.  
+packages.
 The [KOReader toolchains](https://github.com/koreader/koxtoolchain) are also supported,
-and will in fact be a much better fit for the target device than Ubuntu/Linaro/MG/Sourcery ones.
+and **will in fact be a much better fit for the target device than Ubuntu/Linaro/MG/Sourcery ones**.
 This has been tested with the "kobo" one.
 You can also use the "nickel" one if you really want a crappier GCC version,
 whose only saving grace will be the ability to link against the STL dynamically.
@@ -71,41 +72,24 @@ how to use the api.
 
 # Local build & install
 
-```
-$ make
-[...]
-```
-
-Which generates 2 binaries: `build/inkvt.armhf` and `build/inkvt.host`.
-The first one targets the kobo, the second one the host's linux.
+`make` generates 2 binaries: `build/inkvt.armhf` and `build/inkvt.host`.
+The first one targets the kobo, the second one the host's linux (for development & testing).
 If you want to try this on a desktop linux, run it outside
 X/Wayland using <kbd>Ctrl+Alt+F3</kbd>.
 
 To send keyboard input, there are 3 options:
- - if you started inkvt from ssh, stdin
+ - If you started inkvt from ssh, stdin
  - By sending keyboard input with a http post request to port 7800.
    If you move your browser to the ip adress where inkvt is listening (`127.0.0.1:7800` for
    a local test), you'll end up with a webpage where you can send text to inkvt.
    The idea is that you can use a phone with an OTG keyboard.
    It requires that you're on the same (wifi) network, so for example, the builtin
-   phone hotspot or a common wifi router.
-   Also, android keyinput is extremely buggy...
+   phone hotspot or a common wifi router. Also, android keyinput is extremely buggy...
+   To enable this, remove `--no-http` from `inkvt.sh`.
  - (via `--serial`): `screen /dev/ttyACM0 9600` (this requires a Mk. 7+ device, or a self-built g_serial module):
-
-# OTA
-
-For *development*, I found the follow workflow eases deployment:
-Run `python3 -m http.server` from the `inkvt/build` directory.
-Then after each `make`, just `wget` on the Kobo side.
-For installation, use copying to the internal sd over USB via Nickel.
-
-# Todo
-
- - Add hideable touchscreen keyboard / settings bar
- - Far future: switch to vectorized font. Only for ligatures :).
-   Terminus is fine for now.
-   Preferable something typewriter like. And include the
-   file as a raw file in the output binary s.t. everything stays in 1 file.
+   Edit `koboroot/.adds/inkvt/inkvt.sh` around line 140 to change startup options.
+ - On screen keyboard (very experimental, via `--osk`). The last output row is not shown and Ctrl/Alt
+   does not work yet. Rotations are not tested either.
 
 # Authors/Contributors
 
