@@ -49,6 +49,10 @@ mkfifo "/tmp/nickel-hardware-status"
 
 sync
 
+if [ -e "/dev/mmcblk1p1" ]; then
+    umount /mnt/sd
+fi
+
 /usr/local/Kobo/hindenburg &
 LIBC_FATAL_STDERR_=1 /usr/local/Kobo/nickel -platform kobo -skipFontLoad &
 [ "${PLATFORM}" != "freescale" ] && udevadm trigger &
