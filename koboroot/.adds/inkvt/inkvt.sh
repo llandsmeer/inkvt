@@ -51,7 +51,7 @@ if [ "${VIA_NICKEL}" = "true" ]; then
     fi
 
     if [ "${FROM_NICKEL}" = "false" ]; then
-        export $(grep -s -E -e '^(DBUS_SESSION_BUS_ADDRESS|NICKEL_HOME|WIFI_MODULE|LANG|WIFI_MODULE_PATH|INTERFACE)=' "/proc/$(pidof -s nickel)/environ")
+        export $(grep -s -E -e '^(DBUS_SESSION_BUS_ADDRESS|NICKEL_HOME|WIFI_MODULE|LANG|INTERFACE)=' "/proc/$(pidof -s nickel)/environ")
     fi
 
     sync
