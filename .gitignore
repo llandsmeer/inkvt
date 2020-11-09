@@ -22,3 +22,5 @@ __pycache__/
 InkVT-*.zip
 .gdb_history
 peda-session-dash.txt
+deploy.sh
+koboroot/.adds/inkvt/update.sh

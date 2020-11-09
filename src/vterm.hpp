@@ -138,7 +138,7 @@ public:
                 y = tmp;
                 break;
         }
-        // draw ugly cursor
+        // (do not) draw ugly cursor
         if (0) {
             short cfg_row = config.row;
             short cfg_col = config.col;
@@ -172,10 +172,15 @@ public:
         osk_last_y = y;
         osk_last_kp = now;
         // handle kp
+        // this might be some of the ugliest code I have ever written
+        // the returned string is only correct up to the next call to this function
         int h = osk_height();
         int osk_y = state.screen_height - h;
         const kbkey * b = osk_press(state.screen_width, osk_height(), x, y - osk_y);
-        if (!b) return "";
+        if (!b) {
+            printf("Touch event; but no key @ %d x %d\n", x, y);
+            return "";
+        }
         switch (b->mod) {
             case SHIFT:
                 OSK.SHIFT = 1;
@@ -193,15 +198,34 @@ public:
         const char * out = b->normal;
         if (OSK.FN && strlen(b->fn) > 0) {
             out = b->fn;
-        }
-        if (OSK.SHIFT && strlen(b->shift) > 0) {
+        } else if (OSK.SHIFT && strlen(b->shift) > 0) {
             out = b->shift;
+        } else if (strlen(out) == 0) {
+            return "";
         }
-        if (OSK.CTRL) {
-            // TODO: implement this
-        }
-        if (OSK.ALT) {
-            // TODO: implement this
+        if (OSK.CTRL && !OSK.ALT && strlen(out) == 1 && out[0] <= 'z' && out[0] >= 'a') {
+            static char buf[2] = {(char)(out[0] & 0x1f), 0};
+            out = buf;
+        } else if (OSK.CTRL || OSK.ALT) {
+            static char buf[100];
+            assert(strlen(out) < 80);
+            // TODO: Implement this
+            // CSI u ; see
+            //  - http://www.leonerd.org.uk/hacks/fixterms/
+            //  - https://github.com/neovim/libvterm/blob/nvim/src/keyboard.c
+            int mod = (OSK.CTRL ? VTERM_MOD_CTRL : 0)
+                    | (OSK.ALT ? VTERM_MOD_ALT : 0);
+            if (strlen(out) == 3 && out[0] == '\033' && out[1] == '[' && out[2] >= 'A' && out[2] <= 'D') {
+                // arrow keys ; CSI 1;[modifier] {ABCDFHPQRS}
+                sprintf(buf, "\033[1;%d%c", mod+1, out[2]);
+                return buf;
+            } else if (out[0] != '\033') {
+                // `regular' keys
+                sprintf(buf, "\033[%s;%du", out, mod+1);
+                return buf;
+            }
+            // I could handle CSI ... ~ => CSI ... ; MOD+1 ~ handling here
+            // but the current keyboard doesn't have function keys anyway
         }
         OSK.SHIFT = OSK.CTRL = OSK.ALT = OSK.FN = 0;
         return out;
@@ -341,8 +365,8 @@ public:
         return 1;
         /*
         // 'more effcient memcpy implementation':
-        // This work sort of but is very buggy. Especially because the linux
-        // console still likes to overwrite some parts of the screen...
+        // This works sort of but is very buggy. Especially in the linux
+        // console, which likes to overwrite some parts of the screen sometimes...
         VTermToFBInk * me = (VTermToFBInk*)user;
         unsigned short int w, h;
         w = me->state.glyph_width*(src.end_col - src.start_col);

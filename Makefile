@@ -1,7 +1,7 @@
 GITHASH='"'$(shell git rev-parse --short HEAD)'"'
 
 CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
-CROSS_TC?=arm-linux-gnueabihf
+# CROSS_TC?=arm-linux-gnueabihf
 
 ifeq ("$(DEBUG)","true")
 	CFLAGS   += -g -pg

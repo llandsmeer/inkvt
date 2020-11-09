@@ -90,6 +90,7 @@ int main(int argc, char ** argv) {
         ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight, vga or cozette",
             cxxopts::value<std::string>()->default_value("terminus"))
         ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
+        ("d,debug", "Enable debug", cxxopts::value<bool>()->default_value("false"))
     ;
     auto arg_result = arg_options.parse(argc, argv);
     if (arg_result.count("help")) {
@@ -105,6 +106,7 @@ int main(int argc, char ** argv) {
     }
     vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     bool reinit_on_damage = false;
+    bool debug = arg_result["debug"].as<bool>();
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;
     }
@@ -135,6 +137,25 @@ int main(int argc, char ** argv) {
         inputs.add_exit_after(seconds);
         deque_printf(buffers.vt100_in, "waiting %d seconds on input\r\n", seconds);
     }
+    if (debug) {
+        deque_printf(buffers.vt100_in,
+        "view %d %d dev '%s' '%s' '%s' %d offset %d %d %d rota %d %d %d %d %d\r\n",
+            vterm.state.view_width,
+            vterm.state.view_height,
+            vterm.state.device_name,
+            vterm.state.device_codename,
+            vterm.state.device_platform,
+            vterm.state.device_id,
+            vterm.state.view_hori_origin,
+            vterm.state.view_vert_origin,
+            vterm.state.view_vert_offset,
+            vterm.state.ntx_boot_rota,
+            vterm.state.ntx_rota_quirk,
+            vterm.state.is_ntx_quirky_landscape,
+            vterm.state.current_rota,
+            vterm.state.can_rotate
+        );
+    }
     for (;;) {
         inputs.wait(buffers);
         if (reinit_on_damage) {
@@ -151,15 +172,21 @@ int main(int argc, char ** argv) {
                 int y = inputs.istate.y;
 #ifdef TARGET_KOBO
                 // KOBO FIX (WTF?):
-                int tmp = x;
-                x = vterm.state.screen_width - y;
-                y = tmp;
+                if (vterm.state.device_id == 376 /* Clara HD */) {
+                    y += 368;
+                } else {
+                    int tmp = x;
+                    x = vterm.state.screen_width - y;
+                    y = tmp;
+                }
 #endif
                 const char * kb = vterm.click(x, y);
                 for (unsigned i = 0; i < strlen(kb); i++) {
                     buffers.keyboard.push_back(kb[i]);
                 }
-                // deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
+                if (debug) {
+                    deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
+                }
             }
         }
         while (buffers.serial.size() > 0) {
