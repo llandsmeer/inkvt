@@ -23,20 +23,24 @@ ifndef OUT
 	OUT=libvterm.a
 endif
 
-LIBVTERM=libvterm-0.1.3
+LIBVTERM=libvterm
 TBLFILES=$(wildcard $(LIBVTERM)/src/encoding/*.tbl)
 INCFILES=$(TBLFILES:.tbl=.inc)
 VTERMCFILES=$(wildcard $(LIBVTERM)/src/*.c)
 VTERMOFILES=$(VTERMCFILES:.c=.o)
-CFLAGS+=-std=c99 -c -Wall -I$(LIBVTERM)/include
+CFLAGS+=-std=c99 -c -Wall -I$(LIBVTERM)/include -I$(LIBVTERM)/src
 
-all: $(VTERMOFILES)
+all: $(INCFILES) $(VTERMOFILES)
 	mkdir -p build
 	$(AR) rc build/$(OUT) $(VTERMOFILES)
 	$(RANLIB) build/$(OUT)
 
-$(LIBVTERM)/src/%.o: $(LIBVTERM)/src/%.c
+$(LIBVTERM)/src/encoding/%.inc: $(LIBVTERM)/src/encoding/%.tbl
+	@echo TBL $<
+	perl -CSD $(LIBVTERM)/tbl2inc_c.pl $< > $@
+
+$(LIBVTERM)/src/%.o:  $(LIBVTERM)/src/%.c
 	$(CC) $(CFLAGS) $? -o $@
 
 clean:
-	rm -f $(VTERMOFILES) build/$(OUT)
+	rm -f $(VTERMOFILES) build/$(OUT) $(INCFILES)

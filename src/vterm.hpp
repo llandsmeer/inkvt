@@ -24,7 +24,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "../libvterm-0.1.3/include/vterm.h"
+#include "../libvterm/include/vterm.h"
 #include "../FBInk/fbink.h"
 #include "./osk.hpp"
 

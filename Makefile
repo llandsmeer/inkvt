@@ -11,7 +11,7 @@ else
 	CXXFLAGS ?= -O2
 endif
 
-CPPFLAGS += -Ilibvterm-0.1.3/include -DGITHASH=$(GITHASH)
+CPPFLAGS += -Ilibvterm/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
 CXXFLAGS += -Wall -falign-labels=8 -fpermissive
 
