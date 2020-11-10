@@ -8,7 +8,7 @@ void osk_setup(int width, int height) {
     int blockh = height / OSK_H;
     int bpp = 1;
     float radius = 10;
-    float spacing = 6;
+    float spacing = 3;
     for (int i = 0; i < OSK_NKEYS; i++) {
         osk_keys[i].rrect.width = osk_keys[i].w * blockw;
         osk_keys[i].rrect.height = osk_keys[i].h * blockh;

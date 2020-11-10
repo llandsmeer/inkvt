@@ -1,7 +1,3 @@
-[submodule "FBInk"]
-	path = FBInk
-	url = https://github.com/NiLuJe/FBInk/
-	fetchRecurseSubmodules = true
 [submodule "cxxopts"]
 	path = cxxopts
 	url = https://github.com/jarro2783/cxxopts

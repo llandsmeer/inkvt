@@ -25,7 +25,7 @@ public:
     int height = 30;
     float radius = 6;
     float spacing = 10;
-    uint8_t color = 128;
+    uint8_t color = 200;
     uint8_t text_color = 0;
     uint8_t alpha = 255; // for even bpp
     const char * text = "?";
