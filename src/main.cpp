@@ -91,6 +91,8 @@ int main(int argc, char ** argv) {
             cxxopts::value<std::string>()->default_value("terminus"))
         ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
         ("d,debug", "Enable debug", cxxopts::value<bool>()->default_value("false"))
+        ("c,shell", "Shell (full path)", cxxopts::value<std::string>()->default_value("/bin/sh"))
+        ("i,input", "Initial stdin line (eg, call init script)", cxxopts::value<std::string>()->default_value(""))
     ;
     auto arg_result = arg_options.parse(argc, argv);
     if (arg_result.count("help")) {
@@ -98,7 +100,12 @@ int main(int argc, char ** argv) {
         exit(0);
     }
     Buffers buffers;
-    pty.setup();
+    std::string shell = arg_result["shell"].as<std::string>();
+    pty.setup(shell.c_str());
+    std::string init_stdin_line = arg_result["input"].as<std::string>();
+    if (init_stdin_line.length() > 0) {
+        deque_printf(buffers.keyboard, "%s\r\n", init_stdin_line.c_str());
+    }
     std::string fontname = arg_result["fontname"].as<std::string>();
     vterm.has_osk = arg_result["osk"].as<bool>();
     if (vterm.has_osk) {

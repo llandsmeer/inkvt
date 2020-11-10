@@ -42,13 +42,15 @@ public:
         ioctl(master, TIOCSWINSZ, &winsize);
     }
 
-    void setup() {
+    void setup(const char * shell) {
         pid = forkpty(&master, 0, 0, 0);
         if (pid < 0) {
             exit(EXIT_FAILURE);
         } else if (pid == 0) {
-            char shell[] = "/bin/sh";
-            char * const args[] = { shell, 0 };
+            // shell is const char *, but args is char * const
+            char * non_const_shell = (char*)malloc(strlen(shell)+1);
+            memcpy(non_const_shell, shell, strlen(shell)+1);
+            char * const args[] = { non_const_shell, 0 };
             execve(shell, args, environ);
         } else {
             tcgetattr(master, &tios);
