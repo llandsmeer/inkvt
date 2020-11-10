@@ -27,6 +27,8 @@ void osk_render(int fd, FBInkConfig * config, int osk_y, int width, int height) 
     short cfg_col = config->col;
     config->row = 0;
     config->col = 0;
+    // Batch it
+    config->no_refresh = true;
     for (int i = 0; i < OSK_NKEYS; i++) {
         int x = osk_keys[i].x * blockw;
         int y = osk_keys[i].y * blockh;
@@ -42,6 +44,10 @@ void osk_render(int fd, FBInkConfig * config, int osk_y, int width, int height) 
                 config
                 );
     }
+    config->no_refresh = false;
+    // Refresh it and make sure it won't be merged
+    fbink_refresh(fd, osk_y, 0, width, height, config);
+    fbink_wait_for_complete(fd, LAST_MARKER);
     config->row = cfg_row;
     config->col = cfg_col;
 }

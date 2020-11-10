@@ -76,7 +76,9 @@ public:
     int fbfd;
     FBInkConfig config = { 0 };
     FBInkState state = { 0 };
-    FBInkDump dump = { 0 };
+
+    // Used in the commented out term_moverect() implementation:
+    // FBInkDump dump = { 0 };
 
     bool has_osk = false;
 
@@ -255,13 +257,23 @@ public:
         // only call this from main (yeah bad code...)
         // because we need to resize the pty too
         int res = fbink_reinit(fbfd, &config);
-        if (res > EXIT_SUCCESS && res & OK_LAYOUT_CHANGE) {
-            /* we only actually care about layout changes */
-            fbink_get_state(&config, &state);
-            printf("fbink_reinit()\n");
-            vterm_screen_reset(screen, 1);
-            vterm_set_size(term, nrows(), ncols());
-            osk();
+        if (res > EXIT_SUCCESS) {
+            if (res & OK_ROTA_CHANGE) {
+                /* Clear screen and wait to make sure we get rid of potential broken updates that might have been sent against rhe wrong state (i.e., race during the rotation) */
+                fbink_cls(fbfd, &config, nullptr);
+                fbink_wait_for_complete(fbfd, LAST_MARKER);
+            }
+            if (res & OK_LAYOUT_CHANGE) {
+                /* We only actually care about layout changes */
+                fbink_get_state(&config, &state);
+                printf("fbink_reinit()\n");
+                vterm_screen_reset(screen, 1);
+                vterm_set_size(term, nrows(), ncols());
+            }
+            if (res & OK_ROTA_CHANGE) {
+                /* But we do need to repaint our OSK */
+                osk();
+            }
             return true;
         }
         return false;
