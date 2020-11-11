@@ -191,7 +191,7 @@ public:
         int osk_y = state.view_height - h;
         const kbkey * b = osk_press(state.view_width, osk_height(), x, y - osk_y);
         if (!b) {
-            printf("Touch event; but no key @ %d x %d\n", x, y);
+            printf("Touch event; but no key @ (%d, %d)\n", x, y);
             return "";
         }
         switch (b->mod) {
