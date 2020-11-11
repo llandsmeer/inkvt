@@ -198,13 +198,17 @@ int main(int argc, char ** argv) {
                     x = vterm.state.screen_width - inputs.istate.y;
                     y = inputs.istate.x;
                 }
+                if (debug) {
+                    printf("input touch @ (%d, %d) -> (%d, %d)\n", inputs.istate.x, inputs.istate.y, x, y);
+                }
+#else
+                if (debug) {
+                    printf("input touch @ (%d, %d)\n", x, y);
+                }
 #endif
-                const char * kb = vterm.click(x, y);
+                const char * kb = vterm.click(x, y, debug);
                 for (unsigned i = 0; i < strlen(kb); i++) {
                     buffers.keyboard.push_back(kb[i]);
-                }
-                if (debug) {
-                    deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
                 }
             }
         }

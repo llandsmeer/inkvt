@@ -119,7 +119,7 @@ public:
         }
     }
 
-    const char * click(int ix, int iy) {
+    const char * click(int ix, int iy, bool debug=false) {
         // Handle touch translation depending on the current rotation.
         // See the initial matching bit of trickery in main,
         // and hope that FBInk's fbink_rota_native_to_canonical won't screw the pooch.
@@ -146,6 +146,9 @@ public:
                 x = state.screen_height - iy;
                 y = ix;
                 break;
+        }
+        if (debug) {
+            printf("translated @ (%d, %d)\n", x, y);
         }
         // (do not) draw ugly cursor
         if (0) {
