@@ -260,8 +260,10 @@ public:
         if (res > EXIT_SUCCESS) {
             if (res & OK_ROTA_CHANGE) {
                 /* Clear screen and wait to make sure we get rid of potential broken updates
-                 * that might have been sent against the wrong state (i.e., race during the rotation)
+                 * that might have been sent against the wrong state (i.e., race during the rotation).
                  */
+                fbink_wait_for_complete(fbfd, LAST_MARKER);
+                /* NOTE: This is still potentially racy, and *may* fail. (i.e., we *could* retry on non-zero return codes) */
                 fbink_cls(fbfd, &config, nullptr);
                 fbink_wait_for_complete(fbfd, LAST_MARKER);
             }
