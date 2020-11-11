@@ -76,12 +76,12 @@ private:
     void handle_evdev(Buffers & buffers, struct input_event ev) {
         int handled = 1;
         if (ev.type == EV_ABS) {
-            if (ev.code == ABS_MT_POSITION_X && ev.value != 0) {
+            if ((ev.code == ABS_MT_POSITION_X || ev.code == ABS_X) && ev.value != 0) {
                 if (ev.value != istate.x) istate.moved += 1;
                 istate.x = ev.value;
                 istate.xev = 1;
                 handled = 1;
-            } else if (ev.code == ABS_MT_POSITION_Y && ev.value != 0) {
+            } else if ((ev.code == ABS_MT_POSITION_Y || ev.code == ABS_Y) && ev.value != 0) {
                 if (ev.value != istate.y) istate.moved += 1;
                 istate.y = ev.value;
                 istate.yev = 1;
