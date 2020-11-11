@@ -259,7 +259,9 @@ public:
         int res = fbink_reinit(fbfd, &config);
         if (res > EXIT_SUCCESS) {
             if (res & OK_ROTA_CHANGE) {
-                /* Clear screen and wait to make sure we get rid of potential broken updates that might have been sent against rhe wrong state (i.e., race during the rotation) */
+                /* Clear screen and wait to make sure we get rid of potential broken updates
+                 * that might have been sent against the wrong state (i.e., race during the rotation)
+                 */
                 fbink_cls(fbfd, &config, nullptr);
                 fbink_wait_for_complete(fbfd, LAST_MARKER);
             }
