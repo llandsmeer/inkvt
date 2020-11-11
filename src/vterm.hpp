@@ -135,16 +135,24 @@ public:
                 // NOP!
                 break;
             case FB_ROTATE_CW:
+                /*
                 x = iy;
                 y = state.screen_width - ix;
+                */
+                x = state.screen_width - iy;
+                y = ix;
                 break;
             case FB_ROTATE_UD:
                 x = state.screen_width - ix;
                 y = state.screen_height - iy;
                 break;
             case FB_ROTATE_CCW:
+                /*
                 x = state.screen_height - iy;
                 y = ix;
+                */
+                x = iy;
+                y = state.screen_height - ix;
                 break;
         }
         if (debug) {

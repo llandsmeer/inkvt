@@ -183,10 +183,22 @@ int main(int argc, char ** argv) {
                 // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
                 // (This is generally a -90°/+90°, made trickier because there's a layout swap so height/width are swapped).
                 // c.f., rotate_touch_coordinates in FBInk
+
+                // Speaking of, handle said layout shenanigans now...
+                int dim_swap = 0;
+                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 0x01u) == 0) {
+                    // Canonical rotation is even (UR/UD)
+                    dim_swap = vterm.state.screen_width;
+                } else {
+                    // Canonical rotation is odd (CW/CCW)
+                    dim_swap = vterm.state.screen_height;
+                }
+
+                // And the various extra device-specific quirks on top of that...
                 if (vterm.state.device_id == 310 || vterm.state.device_id == 320) {
                     // Touch A/B & Touch C. This will most likely be wrong for one of those.
                     // touch_mirrored_x
-                    x = vterm.state.screen_width - inputs.istate.x;
+                    x = dim_swap - inputs.istate.x;
                     y = inputs.istate.y;
                 } else if (vterm.state.device_id == 374) {
                     // Aura H2O²r1
@@ -195,7 +207,7 @@ int main(int argc, char ** argv) {
                     y = inputs.istate.x;
                 } else {
                     // touch_switch_xy && touch_mirrored_x
-                    x = vterm.state.screen_width - inputs.istate.y;
+                    x = dim_swap - inputs.istate.y;
                     y = inputs.istate.x;
                 }
                 if (debug) {
