@@ -111,9 +111,9 @@ int main(int argc, char ** argv) {
     if (vterm.has_osk) {
         inputs.add_evdev();
     }
-    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
-    bool reinit_on_damage = false;
     bool debug = arg_result["debug"].as<bool>();
+    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str(), debug);
+    bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;
     }
