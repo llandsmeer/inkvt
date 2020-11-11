@@ -126,6 +126,7 @@ public:
         // The whole thing *may* only make sense on Kobo...
         int x = ix;
         int y = iy;
+        // c.f., GestureDetector:adjustGesCoordinate @ https://github.com/koreader/koreader/blob/master/frontend/device/gesturedetector.lua
 #ifdef TARGET_KOBO
         switch (fbink_rota_native_to_canonical(state.current_rota)) {
 #else
@@ -135,10 +136,6 @@ public:
                 // NOP!
                 break;
             case FB_ROTATE_CW:
-                /*
-                x = iy;
-                y = state.screen_width - ix;
-                */
                 x = state.screen_width - iy;
                 y = ix;
                 break;
@@ -147,10 +144,6 @@ public:
                 y = state.screen_height - iy;
                 break;
             case FB_ROTATE_CCW:
-                /*
-                x = state.screen_height - iy;
-                y = ix;
-                */
                 x = iy;
                 y = state.screen_height - ix;
                 break;
