@@ -455,7 +455,7 @@ public:
         return FONT_INDEX_E::TERMINUS;
     }
 
-    void setup(int fontmult=2, const char * fontname="terminus", bool debug=false) {
+    void setup(int fontmult=2, const char * fontname="terminus") {
         gettimeofday(&osk_last_kp, 0);
         cursor.width = 10;
         cursor.height = 10;
@@ -472,13 +472,8 @@ public:
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
-        if (debug) {
-            config.is_quiet = false;
-            config.is_verbose = true;
-        } else {
-            config.is_quiet = true;
-            config.is_verbose = false;
-        }
+        config.is_quiet = true;
+        config.is_verbose = false;
         fbink_update_verbosity(&config);
 
         vtsc = (VTermScreenCallbacks){

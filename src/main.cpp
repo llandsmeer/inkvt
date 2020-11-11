@@ -112,7 +112,7 @@ int main(int argc, char ** argv) {
         inputs.add_evdev();
     }
     bool debug = arg_result["debug"].as<bool>();
-    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str(), debug);
+    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;
