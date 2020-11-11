@@ -259,6 +259,9 @@ public:
         int res = fbink_reinit(fbfd, &config);
         if (res > EXIT_SUCCESS) {
             if (res & OK_ROTA_CHANGE) {
+                /* Update the state to track the new rotation */
+                fbink_get_state(&config, &state);
+                printf("fbink_reinit w/ ROTA_CHANGE\n");
                 /* Clear screen and wait to make sure we get rid of potential broken updates
                  * that might have been sent against the wrong state (i.e., race during the rotation).
                  */
@@ -269,8 +272,7 @@ public:
             }
             if (res & OK_LAYOUT_CHANGE) {
                 /* We only actually care about layout changes */
-                fbink_get_state(&config, &state);
-                printf("fbink_reinit()\n");
+                printf("fbink_reinit w/ LAYOUT_CHANGE\n");
                 vterm_screen_reset(screen, 1);
                 vterm_set_size(term, nrows(), ncols());
             }
