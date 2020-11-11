@@ -180,7 +180,6 @@ int main(int argc, char ** argv) {
 #ifdef TARGET_KOBO
                 // On Kobo, the touch panel has a fixed rotation, one that *never* matches the actual rotation.
                 // Handle the initial translation here so that it makes sense @ (canonical) UR...
-                // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
                 // (This is generally a -90°/+90°, made trickier because there's a layout swap so height/width are swapped).
                 // c.f., rotate_touch_coordinates in FBInk
 
@@ -195,6 +194,7 @@ int main(int argc, char ** argv) {
                 }
 
                 // And the various extra device-specific quirks on top of that...
+                // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
                 if (vterm.state.device_id == 310 || vterm.state.device_id == 320) {
                     // Touch A/B & Touch C. This will most likely be wrong for one of those.
                     // touch_mirrored_x
