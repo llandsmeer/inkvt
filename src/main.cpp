@@ -178,13 +178,25 @@ int main(int argc, char ** argv) {
                 int x = inputs.istate.x;
                 int y = inputs.istate.y;
 #ifdef TARGET_KOBO
-                // KOBO FIX (WTF?):
-                if (vterm.state.device_id == 376 /* Clara HD */) {
-                    y += 368;
+                // On Kobo, the touch panel has a fixed rotation, one that *never* matches the actual rotation.
+                // Handle the initial translation here so that it makes sense @ (canonical) UR...
+                // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
+                // (This is generally a -90°/+90°, made trickier because there's a layout swap so height/width are swapped).
+                // c.f., rotate_touch_coordinates in FBInk
+                if (vterm.state.device_id == 310 || vterm.state.device_id == 320) {
+                    // Touch A/B & Touch C. This will most likely be wrong for one of those.
+                    // touch_mirrored_x
+                    x = vterm.state.screen_width - inputs.istate.x;
+                    y = inputs.istate.y;
+                } else if (vterm.state.device_id == 374) {
+                    // Aura H2O²r1
+                    // touch_switch_xy
+                    x = inputs.istate.y;
+                    y = inputs.istate.x;
                 } else {
-                    int tmp = x;
-                    x = vterm.state.screen_width - y;
-                    y = tmp;
+                    // touch_switch_xy && touch_mirrored_x
+                    x = vterm.state.screen_width - inputs.istate.y;
+                    y = inputs.istate.x;
                 }
 #endif
                 const char * kb = vterm.click(x, y);

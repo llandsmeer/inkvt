@@ -119,25 +119,32 @@ public:
         }
     }
 
-    const char * click(int x, int y) {
-        // screen rot handling. still needs testing! (is this even needed?)
-        int tmp;
+    const char * click(int ix, int iy) {
+        // Handle touch translation depending on the current rotation.
+        // See the initial matching bit of trickery in main,
+        // and hope that FBInk's fbink_rota_native_to_canonical won't screw the pooch.
+        // The whole thing *may* only make sense on Kobo...
+        int x = ix;
+        int y = iy;
+#ifdef TARGET_KOBO
+        switch (fbink_rota_native_to_canonical(state.current_rota)) {
+#else
         switch (state.current_rota) {
+#endif
             case FB_ROTATE_UR:
+                // NOP!
                 break;
             case FB_ROTATE_CW:
-                tmp = y;
-                y = state.screen_width - x;
-                x = tmp;
+                x = iy;
+                y = state.screen_width - ix;
                 break;
             case FB_ROTATE_UD:
-                x = state.screen_width - x;
-                y = state.screen_height - y;
+                x = state.screen_width - ix;
+                y = state.screen_height - iy;
                 break;
             case FB_ROTATE_CCW:
-                tmp = x;
-                x = state.screen_height - y;
-                y = tmp;
+                x = state.screen_height - iy;
+                y = ix;
                 break;
         }
         // (do not) draw ugly cursor
