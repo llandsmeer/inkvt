@@ -85,14 +85,14 @@ public:
     int osk_height() {
         if (!has_osk) return 0;
         int osk_height = 400;
-        if (osk_height > (int)state.screen_height / 2) osk_height = state.screen_height/2;
+        if (osk_height > (int)state.view_height / 2) osk_height = state.view_height/2;
         return osk_height;
     }
 
     int nrows() {
         int kb_height = osk_height();
-        int line_height = state.screen_height / state.max_rows;
-        return (state.screen_height - kb_height) / line_height - 1;
+        int line_height = state.view_height / state.max_rows;
+        return (state.view_height - kb_height) / line_height - 1;
     }
 
     int ncols() {
@@ -113,9 +113,9 @@ public:
     void osk() {
         if (has_osk) {
             int h = osk_height();
-            int osk_y = state.screen_height - h;
-            osk_setup(state.screen_width, h);
-            osk_render(fbfd, &config, osk_y, state.screen_width, h);
+            int osk_y = state.view_height - h;
+            osk_setup(state.view_width, h);
+            osk_render(fbfd, &config, osk_y, state.view_width, h);
         }
     }
 
@@ -177,8 +177,8 @@ public:
         // this might be some of the ugliest code I have ever written
         // the returned string is only correct up to the next call to this function
         int h = osk_height();
-        int osk_y = state.screen_height - h;
-        const kbkey * b = osk_press(state.screen_width, osk_height(), x, y - osk_y);
+        int osk_y = state.view_height - h;
+        const kbkey * b = osk_press(state.view_width, osk_height(), x, y - osk_y);
         if (!b) {
             printf("Touch event; but no key @ %d x %d\n", x, y);
             return "";
