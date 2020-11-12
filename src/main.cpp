@@ -111,9 +111,9 @@ int main(int argc, char ** argv) {
     if (vterm.has_osk) {
         inputs.add_evdev();
     }
+    bool debug = arg_result["debug"].as<bool>();
     vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
     bool reinit_on_damage = false;
-    bool debug = arg_result["debug"].as<bool>();
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;
     }
@@ -178,21 +178,49 @@ int main(int argc, char ** argv) {
                 int x = inputs.istate.x;
                 int y = inputs.istate.y;
 #ifdef TARGET_KOBO
-                // KOBO FIX (WTF?):
-                if (vterm.state.device_id == 376 /* Clara HD */) {
-                    y += 368;
+                // On Kobo, the touch panel has a fixed rotation, one that *never* matches the actual rotation.
+                // Handle the initial translation here so that it makes sense @ (canonical) UR...
+                // (This is generally a -90°/+90°, made trickier because there's a layout swap so height/width are swapped).
+                // c.f., rotate_touch_coordinates in FBInk for a different, possibly less compatible approach...
+
+                // Speaking of, handle said layout shenanigans now...
+                int dim_swap = 0;
+                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 0x01u) == 0) {
+                    // Canonical rotation is even (UR/UD)
+                    dim_swap = vterm.state.screen_width;
                 } else {
-                    int tmp = x;
-                    x = vterm.state.screen_width - y;
-                    y = tmp;
+                    // Canonical rotation is odd (CW/CCW)
+                    dim_swap = vterm.state.screen_height;
                 }
-#endif
-                const char * kb = vterm.click(x, y);
-                for (unsigned i = 0; i < strlen(kb); i++) {
-                    buffers.keyboard.push_back(kb[i]);
+
+                // And the various extra device-specific quirks on top of that...
+                // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
+                if (vterm.state.device_id == 310 || vterm.state.device_id == 320) {
+                    // Touch A/B & Touch C. This will most likely be wrong for one of those.
+                    // touch_mirrored_x
+                    x = dim_swap - inputs.istate.x;
+                    y = inputs.istate.y;
+                } else if (vterm.state.device_id == 374) {
+                    // Aura H2O²r1
+                    // touch_switch_xy
+                    x = inputs.istate.y;
+                    y = inputs.istate.x;
+                } else {
+                    // touch_switch_xy && touch_mirrored_x
+                    x = dim_swap - inputs.istate.y;
+                    y = inputs.istate.x;
                 }
                 if (debug) {
-                    deque_printf(buffers.vt100_in, "touch %d %d\r\n", x, y);
+                    printf("input touch @ (%d, %d) -> (%d, %d)\n", inputs.istate.x, inputs.istate.y, x, y);
+                }
+#else
+                if (debug) {
+                    printf("input touch @ (%d, %d)\n", x, y);
+                }
+#endif
+                const char * kb = vterm.click(x, y, debug);
+                for (unsigned i = 0; i < strlen(kb); i++) {
+                    buffers.keyboard.push_back(kb[i]);
                 }
             }
         }

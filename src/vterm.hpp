@@ -85,14 +85,14 @@ public:
     int osk_height() {
         if (!has_osk) return 0;
         int osk_height = 400;
-        if (osk_height > (int)state.screen_height / 2) osk_height = state.screen_height/2;
+        if (osk_height > (int)state.view_height / 2) osk_height = state.view_height/2;
         return osk_height;
     }
 
     int nrows() {
         int kb_height = osk_height();
-        int line_height = state.screen_height / state.max_rows;
-        return (state.screen_height - kb_height) / line_height - 1;
+        int line_height = state.view_height / state.max_rows;
+        return (state.view_height - kb_height) / line_height - 1;
     }
 
     int ncols() {
@@ -113,32 +113,43 @@ public:
     void osk() {
         if (has_osk) {
             int h = osk_height();
-            int osk_y = state.screen_height - h;
-            osk_setup(state.screen_width, h);
-            osk_render(fbfd, &config, osk_y, state.screen_width, h);
+            int osk_y = state.view_height - h;
+            osk_setup(state.view_width, h);
+            osk_render(fbfd, &config, osk_y, state.view_width, h);
         }
     }
 
-    const char * click(int x, int y) {
-        // screen rot handling. still needs testing! (is this even needed?)
-        int tmp;
+    const char * click(int ix, int iy, bool debug=false) {
+        // Handle touch translation depending on the current rotation.
+        // See the initial matching bit of trickery in main,
+        // and hope that FBInk's fbink_rota_native_to_canonical won't screw the pooch.
+        // The whole thing *may* only make sense on Kobo...
+        int x = ix;
+        int y = iy;
+        // c.f., GestureDetector:adjustGesCoordinate @ https://github.com/koreader/koreader/blob/master/frontend/device/gesturedetector.lua
+#ifdef TARGET_KOBO
+        switch (fbink_rota_native_to_canonical(state.current_rota)) {
+#else
         switch (state.current_rota) {
+#endif
             case FB_ROTATE_UR:
+                // NOP!
                 break;
             case FB_ROTATE_CW:
-                tmp = y;
-                y = state.screen_width - x;
-                x = tmp;
+                x = state.screen_width - iy;
+                y = ix;
                 break;
             case FB_ROTATE_UD:
-                x = state.screen_width - x;
-                y = state.screen_height - y;
+                x = state.screen_width - ix;
+                y = state.screen_height - iy;
                 break;
             case FB_ROTATE_CCW:
-                tmp = x;
-                x = state.screen_height - y;
-                y = tmp;
+                x = iy;
+                y = state.screen_height - ix;
                 break;
+        }
+        if (debug) {
+            printf("translated @ (%d, %d)\n", x, y);
         }
         // (do not) draw ugly cursor
         if (0) {
@@ -177,10 +188,10 @@ public:
         // this might be some of the ugliest code I have ever written
         // the returned string is only correct up to the next call to this function
         int h = osk_height();
-        int osk_y = state.screen_height - h;
-        const kbkey * b = osk_press(state.screen_width, osk_height(), x, y - osk_y);
+        int osk_y = state.view_height - h;
+        const kbkey * b = osk_press(state.view_width, osk_height(), x, y - osk_y);
         if (!b) {
-            printf("Touch event; but no key @ %d x %d\n", x, y);
+            printf("Touch event; but no key @ (%d, %d)\n", x, y);
             return "";
         }
         switch (b->mod) {
@@ -259,14 +270,20 @@ public:
         int res = fbink_reinit(fbfd, &config);
         if (res > EXIT_SUCCESS) {
             if (res & OK_ROTA_CHANGE) {
-                /* Clear screen and wait to make sure we get rid of potential broken updates that might have been sent against rhe wrong state (i.e., race during the rotation) */
+                /* Update the state to track the new rotation */
+                fbink_get_state(&config, &state);
+                printf("fbink_reinit w/ ROTA_CHANGE\n");
+                /* Clear screen and wait to make sure we get rid of potential broken updates
+                 * that might have been sent against the wrong state (i.e., race during the rotation).
+                 */
+                fbink_wait_for_complete(fbfd, LAST_MARKER);
+                /* NOTE: This is still potentially racy, and *may* fail. (i.e., we *could* retry on non-zero return codes) */
                 fbink_cls(fbfd, &config, nullptr);
                 fbink_wait_for_complete(fbfd, LAST_MARKER);
             }
             if (res & OK_LAYOUT_CHANGE) {
                 /* We only actually care about layout changes */
-                fbink_get_state(&config, &state);
-                printf("fbink_reinit()\n");
+                printf("fbink_reinit w/ LAYOUT_CHANGE\n");
                 vterm_screen_reset(screen, 1);
                 vterm_set_size(term, nrows(), ncols());
             }
@@ -459,7 +476,8 @@ public:
         fbink_init(fbfd, &config);
         fbink_cls(fbfd, &config, nullptr);
         fbink_get_state(&config, &state);
-        config.is_quiet = 1;
+        config.is_quiet = true;
+        config.is_verbose = false;
         fbink_update_verbosity(&config);
 
         vtsc = (VTermScreenCallbacks){

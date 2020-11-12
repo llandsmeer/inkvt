@@ -39,9 +39,11 @@
 #include "insecure_http.hpp"
 #include "vterm.hpp"
 
+#ifndef TARGET_KOBO
 static int _is_event_device(const struct dirent *dir) {
     return strncmp("event", dir->d_name, 5) == 0;
 }
+#endif
 
 class Inputs {
 public:
@@ -76,12 +78,12 @@ private:
     void handle_evdev(Buffers & buffers, struct input_event ev) {
         int handled = 1;
         if (ev.type == EV_ABS) {
-            if (ev.code == ABS_MT_POSITION_X && ev.value != 0) {
+            if ((ev.code == ABS_MT_POSITION_X || ev.code == ABS_X) && ev.value != 0) {
                 if (ev.value != istate.x) istate.moved += 1;
                 istate.x = ev.value;
                 istate.xev = 1;
                 handled = 1;
-            } else if (ev.code == ABS_MT_POSITION_Y && ev.value != 0) {
+            } else if ((ev.code == ABS_MT_POSITION_Y || ev.code == ABS_Y) && ev.value != 0) {
                 if (ev.value != istate.y) istate.moved += 1;
                 istate.y = ev.value;
                 istate.yev = 1;
@@ -207,12 +209,24 @@ public:
     }
 
     void add_evdev() {
+#ifdef TARGET_KOBO
+        // Touch input is always event1 on Kobo, and we *definitely* don't want to pickup the gyro if there's one...
+        int fd = open("/dev/input/event1", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
+        if (fd == -1) {
+            printf("couldn't open `/dev/input/event1` %d\n", fd);
+            return;
+        }
+        printf("opened `/dev/input/event1`\n");
+        fdtype[nfds] = FD_EVDEV;
+        fds[nfds].events = POLLIN;
+        fds[nfds++].fd = fd;
+#else
         struct dirent **namelist;
         int ndev = scandir("/dev/input", &namelist, &_is_event_device, alphasort);
         for (int i = 0; i < ndev; i++) {
             char fname[512];
             snprintf(fname, sizeof(fname), "/dev/input/%s", namelist[i]->d_name);
-            int fd = open(fname, O_RDONLY, O_NONBLOCK);
+            int fd = open(fname, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
             if (fd == -1) {
                 printf("couldn't open %s %d\n", fname, fd);
                 continue;
@@ -226,6 +240,7 @@ public:
             fds[nfds].events = POLLIN;
             fds[nfds++].fd = fd;
         }
+#endif
     }
 
     void add_progout(int fd) {
@@ -290,7 +305,7 @@ public:
         const struct timespec zzz   = { 0L, 500000000L };
         nanosleep(&zzz, NULL);
 
-        int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK);
+        int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
         if (fd != -1) {
             fdtype[nfds] = FD_SERIAL;
             fds[nfds].events = POLLIN;
