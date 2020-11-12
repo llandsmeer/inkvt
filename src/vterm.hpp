@@ -35,7 +35,7 @@ constexpr int INTERVAL_MS = 100;
 // on the kobo, random values between 4k and 14k
 #ifdef TARGET_KOBO
 // FIXME: Make it dynamic, and compute it based on maxcols x maxrows to make it a screenful?
-//        (e.g., currently, on a Forma, that's be 90x46 or 90x59 depending on whether the OSK is enabled).
+//        (e.g., currently, at default settings, on a Forma, that'd be 90x46 or 90x59 depending on whether the OSK is enabled).
 //        That'd render the double-disable workaround in tick superfluous.
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 3000;
 #else
@@ -494,7 +494,7 @@ public:
         config.is_verbose = false;
         fbink_update_verbosity(&config);
 
-        // None of the dithering mechanisms deal very well with tiny refresh region, so,
+        // None of the dithering mechanisms deal very well with tiny refresh regions, so,
         // this doesn't really work all that well... :/
         /*
         config.wfm_mode = WFM_MODE_INDEX_E::WFM_DU;
