@@ -72,7 +72,7 @@ private:
     struct pollfd fds[128];
     int nfds = 0;
     bool should_reset_termios = 0;
-    struct termios termios_reset = { 0 };
+    struct termios termios_reset = {};
     VTermToFBInk * vterm = 0;
 
     void handle_evdev(Buffers & buffers, struct input_event ev) {

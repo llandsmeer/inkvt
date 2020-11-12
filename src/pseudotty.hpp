@@ -36,7 +36,7 @@ public:
             unsigned short ws_col;
             unsigned short ws_xpixel;   /* unused */
             unsigned short ws_ypixel;   /* unused */
-        } winsize = { 0 };
+        } winsize = {};
         winsize.ws_row = rows;
         winsize.ws_col = cols;
         ioctl(master, TIOCSWINSZ, &winsize);

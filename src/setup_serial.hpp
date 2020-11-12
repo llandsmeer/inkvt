@@ -8,7 +8,7 @@
 
 void setup_serial(int fd) {
     // https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/#writing
-    struct termios tty = {0};
+    struct termios tty = {};
     if (tcgetattr(fd, &tty) == -1) {
         perror("tcgetattr");
         exit(1);

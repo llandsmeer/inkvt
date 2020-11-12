@@ -77,11 +77,11 @@ public:
     //ts.it_interval.tv_nsec = 100*1000000;
 
     int fbfd;
-    FBInkConfig config = { 0 };
-    FBInkState state = { 0 };
+    FBInkConfig config = {};
+    FBInkState state = {};
 
     // Used in the commented out term_moverect() implementation:
-    // FBInkDump dump = { 0 };
+    // FBInkDump dump = {};
 
     bool has_osk = false;
 

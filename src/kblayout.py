@@ -102,6 +102,7 @@ fmt = ' '.join(map(str.strip, '''{{
     .y = {y},
     .w = {width},
     .h = {h},
+    {{}},
 }}'''.splitlines()))
 
 def cstr(s, encoding='ascii'):
