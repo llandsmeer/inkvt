@@ -148,6 +148,10 @@ public:
                 x = iy;
                 y = state.screen_height - ix;
                 break;
+            default:
+                x = -1;
+                y = -1;
+                break;
         }
         if (debug) {
             printf("translated @ (%d, %d)\n", x, y);
