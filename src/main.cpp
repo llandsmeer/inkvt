@@ -146,7 +146,7 @@ int main(int argc, char ** argv) {
     }
     if (debug) {
         deque_printf(buffers.vt100_in,
-        "FBInk %s\r\nview %dx%d dev %s/%s/%s/%d offset %d/%d/%d rota %d/%d/%d/%d/%d\r\n",
+        "FBInk %s\r\nview %ux%u dev %s/%s/%s/%hu offset %hhu/%hhu/%hhu rota %hhu/%hhu/%d/%hhu/%d\r\n",
             fbink_version(),
             vterm.state.view_width,
             vterm.state.view_height,
