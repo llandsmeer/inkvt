@@ -175,8 +175,8 @@ int main(int argc, char ** argv) {
                 inputs.istate.xev = 0;
                 inputs.istate.yev = 0;
                 inputs.istate.moved = 0;
-                int x = inputs.istate.x;
-                int y = inputs.istate.y;
+                int x;
+                int y;
 #ifdef TARGET_KOBO
                 // On Kobo, the touch panel has a fixed rotation, one that *never* matches the actual rotation.
                 // Handle the initial translation here so that it makes sense @ (canonical) UR...
@@ -184,8 +184,8 @@ int main(int argc, char ** argv) {
                 // c.f., rotate_touch_coordinates in FBInk for a different, possibly less compatible approach...
 
                 // Speaking of, handle said layout shenanigans now...
-                int dim_swap = 0;
-                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 0x01u) == 0) {
+                int dim_swap;
+                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 1u) == 0) {
                     // Canonical rotation is even (UR/UD)
                     dim_swap = vterm.state.screen_width;
                 } else {
@@ -214,6 +214,8 @@ int main(int argc, char ** argv) {
                     printf("input touch @ (%d, %d) -> (%d, %d)\n", inputs.istate.x, inputs.istate.y, x, y);
                 }
 #else
+                x = inputs.istate.x;
+                y = inputs.istate.y;
                 if (debug) {
                     printf("input touch @ (%d, %d)\n", x, y);
                 }
