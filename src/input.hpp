@@ -158,7 +158,7 @@ private:
         if (fdsi.ssi_signo == SIGINT) {
             buffers.keyboard.push_back(0x03);
         } else {
-            printf("Got signal %d, exiting now\n", fdsi.ssi_signo);
+            printf("Got signal %u, exiting now\n", fdsi.ssi_signo);
             exit(EXIT_SUCCESS);
         }
     }
@@ -249,11 +249,11 @@ public:
         fds[nfds++].fd = fd;
     }
 
-    void add_vterm_timer(int fd, VTermToFBInk * vterm) {
+    void add_vterm_timer(int fd, VTermToFBInk * vt) {
         fdtype[nfds] = FD_VTERM_TIMER;
         fds[nfds].events = POLLIN;
         fds[nfds++].fd = fd;
-        this->vterm = vterm;
+        this->vterm = vt;
     }
 
     bool add_serial() {

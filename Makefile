@@ -14,7 +14,38 @@ endif
 CPPFLAGS += -Ilibvterm/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
 CXXFLAGS += -Wall -falign-labels=8
-EXTRA_WARNINGS += -Wextra
+
+# All the warnings! \o/
+EXTRA_WARNINGS+=-Wextra -Wunused
+EXTRA_WARNINGS+=-Wformat=2
+EXTRA_WARNINGS+=-Wformat-signedness
+# NOTE: -Wformat-truncation=2 is still a tad too aggressive w/ GCC 9, so, tone it down to avoid false-positives...
+EXTRA_WARNINGS+=-Wformat-truncation=1
+EXTRA_WARNINGS+=-Wnull-dereference
+EXTRA_WARNINGS+=-Wuninitialized
+ifeq (flto,$(findstring flto,$(CFLAGS)))
+	# Much like SQLite, libvterm also trips quite a few -Wnull-dereference warnings at link-time w/ LTO
+	EXTRA_WARNINGS+=-Wno-null-dereference
+	# And also a few -Wmaybe-uninitialized ones
+	EXTRA_WARNINGS+=-Wno-maybe-uninitialized
+endif
+EXTRA_WARNINGS+=-Wduplicated-branches -Wduplicated-cond
+EXTRA_WARNINGS+=-Wundef
+EXTRA_WARNINGS+=-Wwrite-strings
+EXTRA_WARNINGS+=-Wlogical-op
+EXTRA_WARNINGS+=-Wshadow
+#EXTRA_WARNINGS+=-Wmissing-declarations
+#EXTRA_WARNINGS+=-Winline
+EXTRA_WARNINGS+=-Wcast-qual
+# NOTE: GCC 8 introduces -Wcast-align=strict to warn regardless of the target architecture (i.e., like clang)
+EXTRA_WARNINGS+=-Wcast-align
+EXTRA_WARNINGS+=-Wconversion
+# Output padding info when debugging (NOTE: Clang is slightly more verbose)
+# As well as function attribute hints
+ifdef DEBUG
+	EXTRA_WARNINGS+=-Wpadded
+	EXTRA_WARNINGS+=-Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wmissing-format-attribute
+endif
 
 # Attempt to automatically drop -static-libstdc++ when using the Nickel TC...
 ifeq ($(shell PATH='$(PATH)' $(CROSS_TC)-gcc -dumpmachine 2>/dev/null), arm-nickel-linux-gnueabihf)

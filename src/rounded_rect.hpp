@@ -23,8 +23,8 @@ public:
     int bpp = 1; // BPP: Y YA RGB RGBA
     int width = 30;
     int height = 30;
-    float radius = 6;
-    float spacing = 10;
+    float radius = 6.f;
+    float spacing = 10.f;
     uint8_t color = 200;
     uint8_t text_color = 0;
     uint8_t alpha = 255; // for even bpp
@@ -33,31 +33,31 @@ public:
     void render() {
         int len = width * height * bpp;
         dst = (uint8_t*)realloc(dst, len);
-        float mx = width / 2., my = height / 2.;
-        int bpp = len / (width * height);
+        float mx = width / 2.f, my = height / 2.f;
+        int rbpp = len / (width * height);
         // DRAW ROUNDED RECT
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                float dx = _clamp(_abs(mx - x) - (width - spacing)/2. + radius);
-                float dy = _clamp(_abs(my - y) - (height - spacing)/2. + radius);
+                float dx = _clamp(_abs(mx - x) - (width - spacing)/2.f + radius);
+                float dy = _clamp(_abs(my - y) - (height - spacing)/2.f + radius);
                 bool inside = dx*dx + dy*dy < radius;
-                int idx = (y*width + x)*bpp;
+                int idx = (y*width + x)*rbpp;
                 // for uneven bpp, its either Y or RGB
                 // for even bpp, the last component is alpha
-                for (int p = 0; p < bpp; p++) { // could subtract 1 from even bpp
+                for (int p = 0; p < rbpp; p++) { // could subtract 1 from even bpp
                     dst[idx+p] = inside ? color : 255;
                 }
-                if ((bpp & 1) == 0) {
-                    dst[idx+bpp-1] = alpha;
+                if ((rbpp & 1) == 0) {
+                    dst[idx+rbpp-1] = alpha;
                 }
             }
         }
         // DRAW LABEL
         int glyphWidth = 8;
-        int spacing = 2;
+        int rspacing = 2;
         int glyphHeight = 16;
         int n = strlen(text);
-        int x0 = (width - ((glyphWidth+spacing) * n)) / 2 + spacing/2;
+        int x0 = (width - ((glyphWidth+rspacing) * n)) / 2 + rspacing/2;
         int y0 = (height - glyphHeight) / 2;
         if (x0 < 0 || y0 < 0) return; // just skip drawing if the osk is too small
         for (int i = 0; i < n; i++) {
@@ -67,7 +67,7 @@ public:
             for (int dx = 0; dx < glyphWidth; dx++) {
                 for (int dy = 0; dy < glyphHeight; dy++) {
                     bool set = bitmap[dy] & (1 << dx);
-                    int x = x0 + i*(glyphWidth+spacing) + dx;
+                    int x = x0 + i*(glyphWidth+rspacing) + dx;
                     int y = y0 + dy;
                     int idx = (y*width + x)*bpp;
                     if (set) {

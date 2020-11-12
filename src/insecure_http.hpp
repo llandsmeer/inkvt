@@ -68,7 +68,7 @@ public:
         return ret;
     }
 
-    int setup(int port) {
+    int setup(int setup_port) {
         long err;
         int opt = 1;
         fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -87,7 +87,7 @@ public:
         }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(port);
+        address.sin_port = htons(setup_port);
         err = bind(fd, (struct sockaddr *)&address, sizeof(address));
         if (fd < 0) {
             perror("bind");
@@ -100,7 +100,7 @@ public:
         }
         int flags = server_try(fcntl(fd, F_GETFL, 0));
         fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-        this->port = port;
+        this->port = setup_port;
         return 0;
     }
 
@@ -117,7 +117,7 @@ public:
         int addrlen = sizeof(address);
         clientfd = ::accept(fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         if (clientfd == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) return;
+            if (errno == EAGAIN) return;
             perror("accept");
             exit(1);
         }
