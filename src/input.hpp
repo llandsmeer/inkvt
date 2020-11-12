@@ -323,7 +323,7 @@ public:
         return false;
     }
 
-    int add_http(int port) {
+    int add_http(uint16_t port) {
         if (server.setup(port) < -1) {
             return -1;
         }

@@ -26,7 +26,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 
 #include <vector>
@@ -68,7 +68,7 @@ public:
         return ret;
     }
 
-    int setup(int setup_port) {
+    int setup(uint16_t setup_port) {
         long err;
         int opt = 1;
         fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -87,7 +87,7 @@ public:
         }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(setup_port);
+        address.sin_port = static_cast<in_port_t>(htons(setup_port));
         err = bind(fd, (struct sockaddr *)&address, sizeof(address));
         if (fd < 0) {
             perror("bind");
