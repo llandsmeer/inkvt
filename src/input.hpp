@@ -144,7 +144,7 @@ private:
         server.accept(buffers.keyboard);
     }
 
-    void handle_vterm_timer(Buffers & buffers, int fd) {
+    void handle_vterm_timer(Buffers & buffers __attribute__((unused)), int fd) {
         uint64_t buf;
         if (read(fd, &buf, sizeof(buf)) > 0) {
             vterm->tick();
@@ -170,7 +170,7 @@ private:
         }
     }
 
-    void handle_input_timeout(Buffers & buffers, int fd) {
+    void handle_input_timeout(Buffers & buffers __attribute__((unused)), int fd) {
         uint64_t buf;
         if (read(fd, &buf, sizeof(buf)) > 0 && !had_input) {
             printf("input timeout\n");

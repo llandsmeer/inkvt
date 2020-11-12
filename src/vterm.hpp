@@ -392,7 +392,7 @@ public:
         return 1;
     }
 
-    static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
+    static int term_movecursor(VTermPos pos, VTermPos old, int visible __attribute__((unused)), void * user) {
         // fprintf(stdout, "Called term_movecursor from (%d, %d) to (%d, %d)\n", old.col, old.row, pos.col, pos.row);
         VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
         me->last_cursor = pos; // keep track of cursor in high_throughput_mode
@@ -402,7 +402,7 @@ public:
         return 1;
     }
 
-    static int term_moverect(VTermRect dst, VTermRect src, void * user) {
+    static int term_moverect(VTermRect dst, VTermRect src __attribute__((unused)), void * user) {
         // fprintf(stdout, "Called term_moverect from (%d, %d), (%d, %d) to (%d, %d), (%d, %d)\n", src.start_col, src.start_row, src.end_col, src.end_row, dst.start_col, dst.start_row, dst.end_col, dst.end_row);
         term_damage(dst, user);
         return 1;
@@ -425,11 +425,11 @@ public:
         */
     }
 
-    static int term_settermprop(VTermProp prop, VTermValue * val, void * user) {
+    static int term_settermprop(VTermProp prop __attribute__((unused)), VTermValue * val __attribute__((unused)), void * user __attribute__((unused))) {
         return 1;
     }
 
-    static int term_bell(void* user) {
+    static int term_bell(void* user __attribute__((unused))) {
         return 0;
     }
 

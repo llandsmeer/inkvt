@@ -616,7 +616,7 @@ public:
         _translate_press(keycode, out);
     }
 
-    void release(int keycode, std::deque<char> & out) {
+    void release(int keycode, std::deque<char> & out __attribute__((unused))) {
         if (keycode == KEY_LEFTMETA)   _is_leftmeta_down = 0;
         if (keycode == KEY_RIGHTMETA)  _is_rightmeta_down = 0;
         if (keycode == KEY_LEFTCTRL)   _is_leftctrl_down = 0;

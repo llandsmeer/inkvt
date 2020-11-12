@@ -144,7 +144,7 @@ p(2, '_translate_press(keycode, out);')
 p(1, '}')
 p()
 
-p(1, 'void release(int keycode, std::deque<char> & out) {')
+p(1, 'void release(int keycode, std::deque<char> & out __attribute__((unused))) {')
 for k in keymap['_track']:
     p(2, f'if (keycode == KEY_{k})'.ljust(30), f'{trackvar(k)} = 0;')
 p(1, '}')
