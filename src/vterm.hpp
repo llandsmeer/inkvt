@@ -34,6 +34,9 @@ constexpr int INTERVAL_MS = 100;
 // is ~ 300k output_char() calls per 100ms
 // on the kobo, random values between 4k and 14k
 #ifdef TARGET_KOBO
+// FIXME: Make it dynamic, and compute it based on maxcols x maxrows to make it a screenful?
+//        (e.g, currently, on a Forma, that's be 90x46 or 90x59 depending on whether the OSK is enabled).
+//        That'd render the double-disable workaround in tick superfluous.
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 3000;
 #else
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 100000;
@@ -252,13 +255,17 @@ public:
     void tick() {
         if (high_throughput_mode && nwrites_in_interval < HIGH_THROUGHPUT_THRESHOLD) {
             high_throughput_mode = false;
-            VTermRect full_refresh = { 0, 0, 0, 0};
+            VTermRect full_refresh = { 0, 0, 0, 0 };
             full_refresh.end_col = ncols();
             full_refresh.end_row = nrows();
+            printf("full_refresh term_damage via tick (writes: %ld < %ld)\n", nwrites_in_interval, HIGH_THROUGHPUT_THRESHOLD);
             term_damage(full_refresh, this);
+            // Make sure term_damage doesn't re-trip high throughput mode
+            high_throughput_mode = false;
         }
         if (nwrites_in_interval == 0) {
             nticks_without_output += 1;
+            printf("nticks_without_output: %d\n", nticks_without_output);
             if (nticks_without_output > TIMER_SLEEP_MODE_THRESHOLD) {
                 timerfd_settime(timerfd, 0, &ts_off, 0);
                 timer_is_running = false;
@@ -316,11 +323,14 @@ public:
     }
 
     void output_char(const VTermPos & pos) {
+        //printf("output_char (%d, %d)\n", pos.col, pos.row);
         // high throughput stuff
         nwrites_in_interval += 1;
+        //printf("nwrites_in_interval %ld\n", nwrites_in_interval);
         if (timer_is_running) {
             if (high_throughput_mode) return;
             if (nwrites_in_interval > HIGH_THROUGHPUT_THRESHOLD) {
+                printf("Enabling high_throughput_mode (%ld > %ld)\n", nwrites_in_interval, HIGH_THROUGHPUT_THRESHOLD);
                 high_throughput_mode = true;
             }
         } else {
@@ -362,7 +372,7 @@ public:
         VTermPos pos;
         int row, col;
 
-        // fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
+        fprintf(stdout, "Called term_damage on (%d, %d) to (%d, %d)\n", rect.start_col, rect.start_row, rect.end_col, rect.end_row);
         // NOTE: Optimize large rects by only doing a single refresh call, instead of paired with cell-per-cell drawing.
         me->config.no_refresh = true;
 
@@ -386,6 +396,7 @@ public:
     }
 
     static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
+        fprintf(stdout, "Called term_movecursor from (%d, %d) to (%d, %d)\n", old.col, old.row, pos.col, pos.row);
         VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
         me->last_cursor = pos; // keep track of cursor in high_throughput_mode
         if (me->high_throughput_mode) return 1;
@@ -395,6 +406,7 @@ public:
     }
 
     static int term_moverect(VTermRect dst, VTermRect src, void * user) {
+        fprintf(stdout, "Called term_moverect from (%d, %d), (%d, %d) to (%d, %d), (%d, %d)\n", src.start_col, src.start_row, src.end_col, src.end_row, dst.start_col, dst.start_row, dst.end_col, dst.end_row);
         term_damage(dst, user);
         return 1;
         /*
