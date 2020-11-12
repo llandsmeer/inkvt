@@ -89,7 +89,7 @@ int main(int argc, char ** argv) {
         ("osk", "Experimental OSK", cxxopts::value<bool>()->default_value("false"))
         ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight, vga or cozette",
             cxxopts::value<std::string>()->default_value("terminus"))
-        ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
+        ("s,fontsize", "Fontsize multiplier", cxxopts::value<uint8_t>()->default_value("2"))
         ("d,debug", "Enable debug", cxxopts::value<bool>()->default_value("false"))
         ("c,shell", "Shell (full path)", cxxopts::value<std::string>()->default_value("/bin/sh"))
         ("i,input", "Initial stdin line (eg, call init script)", cxxopts::value<std::string>()->default_value(""))
@@ -112,7 +112,7 @@ int main(int argc, char ** argv) {
         inputs.add_evdev();
     }
     bool debug = arg_result["debug"].as<bool>();
-    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
+    vterm.setup(arg_result["fontsize"].as<uint8_t>(), fontname.c_str());
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;

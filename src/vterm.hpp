@@ -309,8 +309,8 @@ public:
 
     void update_fg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-#define FG(x) ((255-x) / 2)
-#define BG(x) (255-x)
+#define FG(x) static_cast<uint8_t>((255u-x) / 2u)
+#define BG(x) static_cast<uint8_t>(255u-x)
         fbink_set_fg_pen_rgba(FG(c->rgb.red), FG(c->rgb.green), FG(c->rgb.blue), 0xFFu, false, true);
     }
 
@@ -336,8 +336,8 @@ public:
         // drawing stuff
         VTermScreenCell cell;
         vterm_screen_get_cell(screen, pos, &cell);
-        config.col = pos.col;
-        config.row = pos.row;
+        config.col = static_cast<short int>(pos.col);
+        config.row = static_cast<short int>(pos.row);
         if (pos.row == last_cursor.row && pos.col == last_cursor.col) {
             update_fg_color(&cell.bg);
             update_bg_color(&cell.fg);
@@ -385,9 +385,9 @@ public:
 
         // Refresh the full rectangle
         me->config.no_refresh = false;
-        me->config.col = rect.start_col;
-        me->config.row = rect.start_row;
-        fbink_grid_refresh(me->fbfd, rect.end_col - rect.start_col, rect.end_row - rect.start_row, &me->config);
+        me->config.col = static_cast<short int>(rect.start_col);
+        me->config.row = static_cast<short int>(rect.start_row);
+        fbink_grid_refresh(me->fbfd, static_cast<unsigned short int>(rect.end_col - rect.start_col), static_cast<unsigned short int>(rect.end_row - rect.start_row), &me->config);
 
         return 1;
     }
@@ -473,7 +473,7 @@ public:
         return FONT_INDEX_E::TERMINUS;
     }
 
-    void setup(int fontmult=2, const char * fontname="terminus") {
+    void setup(uint8_t fontmult=2, const char * fontname="terminus") {
         gettimeofday(&osk_last_kp, 0);
         cursor.width = 10;
         cursor.height = 10;
