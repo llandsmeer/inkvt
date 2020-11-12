@@ -28,7 +28,7 @@ TBLFILES=$(wildcard $(LIBVTERM)/src/encoding/*.tbl)
 INCFILES=$(TBLFILES:.tbl=.inc)
 VTERMCFILES=$(wildcard $(LIBVTERM)/src/*.c)
 VTERMOFILES=$(VTERMCFILES:.c=.o)
-CFLAGS+=-std=c99 -c -Wall -I$(LIBVTERM)/include -I$(LIBVTERM)/src
+CFLAGS+=-std=c99 -c -Wall -Wno-unused-function -I$(LIBVTERM)/include -I$(LIBVTERM)/src
 
 all: $(INCFILES) $(VTERMOFILES)
 	mkdir -p build
