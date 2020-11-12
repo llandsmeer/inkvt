@@ -485,6 +485,17 @@ public:
         config.is_verbose = false;
         fbink_update_verbosity(&config);
 
+        // None of the dithering mechanisms deal very well with tiny refresh region, so,
+        // this doesn't really work all that well... :/
+        /*
+        config.wfm_mode = WFM_MODE_INDEX_E::WFM_DU;
+        if (strcmp(state.device_platform, "Mark 7") >= 0) {
+            config.dithering_mode = HW_DITHER_INDEX_E::HWD_ORDERED;
+        } else {
+            config.dithering_mode = HW_DITHER_INDEX_E::HWD_LEGACY;
+        }
+        */
+
         vtsc = (VTermScreenCallbacks){
             .damage = VTermToFBInk::term_damage,
             .moverect = VTermToFBInk::term_moverect,
