@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <cassert>
 #include <cstdint>
-#include <math.h>
 #include <string.h>
 
 
@@ -13,19 +12,22 @@
 #include "../FBInk/fonts/topaz.h"
 
 class RoundedRect {
-    static float _clamp(float a) {
-        return a > 0.f ? a : 0.f;
+    static int _abs(int a) {
+        return a > 0 ? a : -a;
+    }
+    static int _clamp(int a) {
+        return a > 0 ? a : 0;
     }
 public:
-    uint8_t * dst = 0;
-    uint8_t bpp = 1; // BPP: Y YA RGB RGBA
-    unsigned int width = 30;
-    unsigned int height = 30;
+    uint8_t * dst = nullptr;
+    uint8_t bpp = 1u; // BPP: Y YA RGB RGBA
+    unsigned int width = 30u;
+    unsigned int height = 30u;
     float radius = 6.f;
     float spacing = 10.f;
-    uint8_t color = 200;
-    uint8_t text_color = 0;
-    uint8_t alpha = 255; // for even bpp
+    uint8_t color = 200u;
+    uint8_t text_color = 0u;
+    uint8_t alpha = 255u; // for even bpp
     const char * text = "?";
 
     void render() {
@@ -33,21 +35,20 @@ public:
         dst = (uint8_t*)realloc(dst, len);
         float mx = static_cast<float>(width) / 2.f;
         float my = static_cast<float>(height) / 2.f;
-        uint8_t rbpp = static_cast<uint8_t>(len / (width * height));
         // DRAW ROUNDED RECT
         for (unsigned int y = 0; y < height; y++) {
             for (unsigned int x = 0; x < width; x++) {
-                float dx = _clamp(fabsf(mx - static_cast<float>(x)) - (static_cast<float>(width) - spacing)/2.f + radius);
-                float dy = _clamp(fabsf(my - static_cast<float>(y)) - (static_cast<float>(height) - spacing)/2.f + radius);
+                float dx = _clamp(_abs(mx - static_cast<float>(x)) - (static_cast<float>(width) - spacing)/2.f + radius);
+                float dy = _clamp(_abs(my - static_cast<float>(y)) - (static_cast<float>(height) - spacing)/2.f + radius);
                 bool inside = dx*dx + dy*dy < radius;
-                size_t idx = (y*width + x)*rbpp;
+                size_t idx = (y*width + x)*bpp;
                 // for uneven bpp, its either Y or RGB
                 // for even bpp, the last component is alpha
-                for (unsigned int p = 0; p < rbpp; p++) { // could subtract 1 from even bpp
-                    dst[idx+p] = inside ? color : 255;
+                for (unsigned int p = 0; p < bpp; p++) { // could subtract 1 from even bpp
+                    dst[idx+p] = inside ? color : 255u;
                 }
-                if ((rbpp & 1) == 0) {
-                    dst[idx+rbpp-1] = alpha;
+                if ((bpp & 1) == 0) {
+                    dst[idx+bpp-1] = alpha;
                 }
             }
         }
