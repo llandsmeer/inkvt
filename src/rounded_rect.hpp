@@ -46,7 +46,7 @@ public:
                 // for uneven bpp, it's either Y or RGB
                 // for even bpp, the last component is alpha
                 for (uint8_t p = 0u; p < bpp; p++) { // could subtract 1 from even bpp
-                    dst[idx+p] = inside ? color : 255u;
+                    dst[idx+p] = inside ? color : 0xFFu;
                 }
                 if ((bpp & 1u) == 0u) {
                     dst[idx+bpp-1u] = alpha;

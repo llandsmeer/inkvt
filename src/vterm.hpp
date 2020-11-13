@@ -309,8 +309,8 @@ public:
 
     void update_fg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-#define FG(x) static_cast<uint8_t>((255u-x) / 2u)
-#define BG(x) static_cast<uint8_t>(255u-x)
+#define FG(x) static_cast<uint8_t>((x^0xFFu) / 2u)
+#define BG(x) static_cast<uint8_t>(x^0xFFu)
         fbink_set_fg_pen_rgba(FG(c->rgb.red), FG(c->rgb.green), FG(c->rgb.blue), 0xFFu, false, true);
     }
 
