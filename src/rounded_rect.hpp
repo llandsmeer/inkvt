@@ -26,9 +26,9 @@ public:
     unsigned int height = 30u;
     float radius = 6.f;
     float spacing = 10.f;
-    uint8_t color = 200u;
-    uint8_t text_color = 0u;
-    uint8_t alpha = 255u; // for even bpp
+    uint8_t color = 0xCCu;
+    uint8_t text_color = 0x00u;
+    uint8_t alpha = 0xFFu; // for even bpp
     const char * text = "?";
 
     void render() {
