@@ -186,7 +186,7 @@ int main(int argc, char ** argv) {
 
                 // Speaking of, handle said layout shenanigans now...
                 int dim_swap;
-                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 1u) == 0) {
+                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 1u) == 0u) {
                     // Canonical rotation is even (UR/UD)
                     dim_swap = vterm.state.screen_width;
                 } else {
@@ -196,12 +196,12 @@ int main(int argc, char ** argv) {
 
                 // And the various extra device-specific quirks on top of that...
                 // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
-                if (vterm.state.device_id == 310 || vterm.state.device_id == 320) {
+                if (vterm.state.device_id == 310u || vterm.state.device_id == 320u) {
                     // Touch A/B & Touch C. This will most likely be wrong for one of those.
                     // touch_mirrored_x
                     x = dim_swap - inputs.istate.x;
                     y = inputs.istate.y;
-                } else if (vterm.state.device_id == 374) {
+                } else if (vterm.state.device_id == 374u) {
                     // Aura H2O²r1
                     // touch_switch_xy
                     x = inputs.istate.y;
@@ -222,7 +222,7 @@ int main(int argc, char ** argv) {
                 }
 #endif
                 const char * kb = vterm.click(x, y, debug);
-                for (unsigned i = 0; i < strlen(kb); i++) {
+                for (size_t i = 0u; i < strlen(kb); i++) {
                     buffers.keyboard.push_back(kb[i]);
                 }
             }

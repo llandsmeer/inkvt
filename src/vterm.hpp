@@ -473,7 +473,7 @@ public:
         return FONT_INDEX_E::TERMINUS;
     }
 
-    void setup(uint8_t fontmult=2, const char * fontname="terminus") {
+    void setup(uint8_t fontmult=2u, const char * fontname="terminus") {
         gettimeofday(&osk_last_kp, 0);
         cursor.width = 10u;
         cursor.height = 18u;
