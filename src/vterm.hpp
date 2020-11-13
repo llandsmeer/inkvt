@@ -85,20 +85,20 @@ public:
 
     bool has_osk = false;
 
-    int osk_height() {
-        if (!has_osk) return 0;
-        int osk_height = 400;
-        if (osk_height > (int)state.view_height / 2) osk_height = state.view_height/2;
+    unsigned int osk_height() {
+        if (!has_osk) return 0u;
+        unsigned int osk_height = 400u;
+        if (osk_height > state.view_height / 2u) osk_height = state.view_height/2u;
         return osk_height;
     }
 
-    int nrows() {
-        int kb_height = osk_height();
-        int line_height = state.view_height / state.max_rows;
-        return (state.view_height - kb_height) / line_height - 1;
+    unsigned int nrows() {
+        unsigned int kb_height = osk_height();
+        unsigned int line_height = state.view_height / state.max_rows;
+        return (state.view_height - kb_height) / line_height - 1u;
     }
 
-    int ncols() {
+    unsigned int ncols() {
         return state.max_cols;
     }
 
@@ -115,8 +115,8 @@ public:
 
     void osk() {
         if (has_osk) {
-            int h = osk_height();
-            int osk_y = state.view_height - h;
+            unsigned int h = osk_height();
+            unsigned int osk_y = state.view_height - h;
             osk_setup(state.view_width, h);
             osk_render(fbfd, &config, osk_y, state.view_width, h);
         }
@@ -171,8 +171,8 @@ public:
                     cursor.width,
                     cursor.height,
                     cursor.width * cursor.height * cursor.bpp,
-                    x - cursor.width / 2,
-                    y - cursor.height / 2,
+                    static_cast<short int>(x - cursor.width / 2u),
+                    static_cast<short int>(y - cursor.height / 2u),
                     &config
                     );
             config.row = cfg_row;
@@ -195,9 +195,9 @@ public:
         // handle kp
         // this might be some of the ugliest code I have ever written
         // the returned string is only correct up to the next call to this function
-        int h = osk_height();
-        int osk_y = state.view_height - h;
-        const kbkey * b = osk_press(state.view_width, osk_height(), x, y - osk_y);
+        unsigned int h = osk_height();
+        unsigned int osk_y = state.view_height - h;
+        const kbkey * b = osk_press(state.view_width, osk_height(), static_cast<unsigned int>(x), static_cast<unsigned int>(y - osk_y));
         if (!b) {
             printf("Touch event; but no key @ (%d, %d)\n", x, y);
             return "";
@@ -475,10 +475,10 @@ public:
 
     void setup(uint8_t fontmult=2, const char * fontname="terminus") {
         gettimeofday(&osk_last_kp, 0);
-        cursor.width = 10;
-        cursor.height = 10;
-        cursor.spacing = 0;
-        cursor.radius = 5;
+        cursor.width = 10u;
+        cursor.height = 10u;
+        cursor.spacing = 0.f;
+        cursor.radius = 5.f;
         cursor.render();
         fbfd = fbink_open();
         if (fbfd == -1) {

@@ -12,11 +12,11 @@
 #include "../FBInk/fonts/topaz.h"
 
 class RoundedRect {
-    static int _abs(int a) {
-        return a > 0 ? a : -a;
+    static float _abs(float a) {
+        return a > 0.f ? a : -a;
     }
-    static int _clamp(int a) {
-        return a > 0 ? a : 0;
+    static float _clamp(float a) {
+        return a > 0.f ? a : 0.f;
     }
 public:
     uint8_t * dst = nullptr;
