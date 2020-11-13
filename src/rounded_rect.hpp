@@ -32,7 +32,6 @@ public:
 
     void render() {
         size_t len = width * height * bpp;
-        printf("RoundedRect:render realloc dst (%p) to %zu bytes\n", dst, len);
         dst = (uint8_t*)realloc(dst, len);
         float mx = static_cast<float>(width) / 2.f;
         float my = static_cast<float>(height) / 2.f;
@@ -43,7 +42,6 @@ public:
                 float dy = _clamp(_abs(my - y) - (height - spacing)/2.f + radius);
                 bool inside = dx*dx + dy*dy < radius;
                 size_t idx = (y*width + x)*bpp;
-                //printf("RECT: (%u, %u) -> idx: %zu\n", x, y, idx);
                 // for uneven bpp, its either Y or RGB
                 // for even bpp, the last component is alpha
                 for (uint8_t p = 0; p < bpp; p++) { // could subtract 1 from even bpp
@@ -62,7 +60,6 @@ public:
         size_t n = strlen(text);
         int x0 = (width - ((glyphWidth+rspacing) * n)) / 2 + rspacing/2;
         int y0 = (height - glyphHeight) / 2;
-        printf("x0: %d, y0: %d\n", x0, y0);
         if (x0 < 0 || y0 < 0) return; // just skip drawing if the osk is too small
         for (size_t i = 0; i < n; i++) {
             unsigned char ch = text[i];
@@ -74,7 +71,6 @@ public:
                     unsigned int x = x0 + i*(glyphWidth+rspacing) + dx;
                     unsigned int y = y0 + dy;
                     size_t idx = (y*width + x)*bpp;
-                    //printf("LABEL: (%u, %u) -> idx: %zu\n", x, y, idx);
                     if (set) {
                         for (uint8_t p = 0; p < bpp; p++) { // could subtract 1 from even bpp
                             dst[idx+p] = text_color;
