@@ -121,7 +121,7 @@ public:
             perror("accept");
             exit(1);
         }
-        int nread = read(clientfd, buffer, sizeof(buffer)-1);
+        ssize_t nread = read(clientfd, buffer, sizeof(buffer)-1);
         if (nread <= 0) {
             close(clientfd);
             return;

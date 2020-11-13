@@ -105,8 +105,8 @@ private:
 
     void handle_evdev(Buffers & buffers, int fd) {
         struct input_event ev;
-        unsigned int size = read(fd, &ev, sizeof(struct input_event));
-        if (size < sizeof(struct input_event)) {
+        ssize_t size = read(fd, &ev, sizeof(struct input_event));
+        if (size < 0 || static_cast<size_t>(size) < sizeof(struct input_event)) {
             printf("error reading from fd %d\n", fd);
             return;
         }
@@ -116,11 +116,11 @@ private:
     void handle_serial(Buffers & buffers, int fd) {
         char buf[1];
         for (;;) {
-            int nread = read(fd, buf, sizeof(buf));
+            ssize_t nread = read(fd, buf, sizeof(buf));
             if (nread == -1 || nread == 0) { // errno = EAGAIN for blocking read
                 break;
             }
-            for (int n = 0; n < nread; n++) {
+            for (ssize_t n = 0; n < nread; n++) {
                 buffers.serial.push_back(buf[n]);
             }
         }
@@ -128,9 +128,9 @@ private:
 
     void handle_progout(Buffers & buffers, int fd) {
         char buf[64];
-        int nread = read(fd, buf, sizeof(buf));
+        ssize_t nread = read(fd, buf, sizeof(buf));
         if (nread < 0) return;
-        for (int i = 0; i < nread; i++) {
+        for (ssize_t i = 0; i < nread; i++) {
             buffers.vt100_in.push_back(buf[i]);
         }
         // NOTE: Don't read out everything available
