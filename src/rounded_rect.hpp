@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cstdint>
+#include <math.h>
 #include <string.h>
 
 
@@ -12,11 +13,11 @@
 #include "../FBInk/fonts/topaz.h"
 
 class RoundedRect {
-    static int _abs(int a) {
-        return a > 0 ? a : -a;
+    static float _abs(float a) {
+        return a > 0.f ? floorf(a) : floorf(-a);
     }
-    static int _clamp(int a) {
-        return a > 0 ? a : 0;
+    static float _clamp(float a) {
+        return a > 0.f ? floorf(a) : 0;
     }
 public:
     uint8_t * dst = nullptr;
@@ -38,9 +39,9 @@ public:
         // DRAW ROUNDED RECT
         for (unsigned int y = 0; y < height; y++) {
             for (unsigned int x = 0; x < width; x++) {
-                float dx = _clamp(_abs(mx - x) - (width - spacing)/2.f + radius);
-                float dy = _clamp(_abs(my - y) - (height - spacing)/2.f + radius);
-                bool inside = dx*dx + dy*dy < radius;
+                float dx = _clamp(_abs(mx - static_cast<float>(x)) - (static_cast<float>(width) - spacing)/2.f + radius);
+                float dy = _clamp(_abs(my - static_cast<float>(y)) - (static_cast<float>(height) - spacing)/2.f + radius);
+                bool inside = (dx*dx + dy*dy) < radius;
                 size_t idx = (y*width + x)*bpp;
                 // for uneven bpp, its either Y or RGB
                 // for even bpp, the last component is alpha
