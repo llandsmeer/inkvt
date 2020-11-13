@@ -59,8 +59,8 @@ public:
         uint8_t glyphHeight = 16u;
         if (width < glyphWidth || height < glyphHeight) return; // rect can't be smaller than the label
         size_t n = strlen(text);
-        int x0 = (width - ((glyphWidth+rspacing) * n)) / 2 + rspacing/2;
-        int y0 = (height - glyphHeight) / 2;
+        int x0 = (static_cast<int>(width) - ((glyphWidth+rspacing) * n)) / 2 + rspacing/2;
+        int y0 = (static_cast<int>(height) - glyphHeight) / 2;
         if (x0 < 0 || y0 < 0) return; // just skip drawing if the osk is too small
         for (size_t i = 0; i < n; i++) {
             unsigned char ch = text[i];
