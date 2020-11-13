@@ -228,7 +228,7 @@ int main(int argc, char ** argv) {
             }
         }
         while (buffers.serial.size() > 0) {
-            int c = buffers.serial.front();
+            char c = buffers.serial.front();
             buffers.serial.pop_front();
             buffers.keyboard.push_back(c);
         }
@@ -245,7 +245,7 @@ int main(int argc, char ** argv) {
         }
         while (buffers.keyboard.size() > 0) {
             inputs.had_input = 1;
-            int c = buffers.keyboard.front();
+            char c = buffers.keyboard.front();
             buffers.keyboard.pop_front();
             if (keytrans.is_ctrl()) {
                 c = c & 31;
@@ -253,7 +253,7 @@ int main(int argc, char ** argv) {
             pty.write(c);
         }
         while (buffers.vt100_in.size() > 0) {
-            int c = buffers.vt100_in.front();
+            char c = buffers.vt100_in.front();
             buffers.vt100_in.pop_front();
             vterm.write(c);
         }

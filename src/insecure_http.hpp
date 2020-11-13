@@ -145,7 +145,7 @@ public:
             char c1;
             char c2;
             while ((ss >> c1) && (ss >> c2)) {
-                output.push_back((hexdigit(c1)<<4) | hexdigit(c2));
+                output.push_back(static_cast<char>((hexdigit(c1)<<4) | hexdigit(c2)));
             }
             static char ok[] = "ok.\n";
             send(clientfd, response_headers , sizeof(response_headers)-1 , 0);
