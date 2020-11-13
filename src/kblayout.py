@@ -98,10 +98,10 @@ fmt = ' '.join(map(str.strip, '''{{
     .normal = {normal},
     .shift = {shift},
     .fn = {fn},
-    .x = {x},
-    .y = {y},
-    .w = {width},
-    .h = {h},
+    .x = {x:.2f}f,
+    .y = {y:.2f}f,
+    .w = {width:.2f}f,
+    .h = {h:.2f}f,
     {{}},
 }}'''.splitlines()))
 
@@ -116,9 +116,9 @@ def cstr(s, encoding='ascii'):
     return '"' + result + '"'
 
 print(DEF)
-print(f'#define OSK_NKEYS {len(allkeys)}')
-print(f'#define OSK_W {W}')
-print(f'#define OSK_H {H}')
+print(f'#define OSK_NKEYS {len(allkeys)}u')
+print(f'#define OSK_W {W}u')
+print(f'#define OSK_H {H}u')
 print(f'struct kbkey osk_keys[{len(allkeys)}] = {{')
 for key in allkeys:
     for k in 'text', 'normal', 'shift', 'fn':

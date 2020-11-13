@@ -9,7 +9,7 @@ void osk_setup(unsigned int width, unsigned int height) {
     uint8_t bpp = 1u;
     float radius = 10.f;
     float spacing = 3.f;
-    for (unsigned int i = 0; i < OSK_NKEYS; i++) {
+    for (unsigned int i = 0u; i < OSK_NKEYS; i++) {
         osk_keys[i].rrect.width = static_cast<unsigned int>(osk_keys[i].w * static_cast<float>(blockw));
         osk_keys[i].rrect.height = static_cast<unsigned int>(osk_keys[i].h * static_cast<float>(blockh));
         osk_keys[i].rrect.bpp = bpp;
@@ -29,10 +29,10 @@ void osk_render(int fd, FBInkConfig * config, unsigned int osk_y, unsigned int w
     config->col = 0;
     // Batch it
     config->no_refresh = true;
-    for (unsigned int i = 0; i < OSK_NKEYS; i++) {
+    for (unsigned int i = 0u; i < OSK_NKEYS; i++) {
         unsigned int x = static_cast<unsigned int>(osk_keys[i].x * static_cast<float>(blockw));
         unsigned int y = static_cast<unsigned int>(osk_keys[i].y * static_cast<float>(blockh));
-        // printf("%d %d %d %d %d\n", i, x, y, osk_keys[i].rrect.width, osk_keys[i].rrect.height);
+        // printf("%u %u %u %u %u\n", i, x, y, osk_keys[i].rrect.width, osk_keys[i].rrect.height);
         fbink_print_raw_data(
                 fd,
                 osk_keys[i].rrect.dst,
@@ -46,7 +46,7 @@ void osk_render(int fd, FBInkConfig * config, unsigned int osk_y, unsigned int w
     }
     config->no_refresh = false;
     // Refresh it and make sure it won't be merged
-    fbink_refresh(fd, osk_y, 0, width, height, config);
+    fbink_refresh(fd, osk_y, 0u, width, height, config);
     fbink_wait_for_complete(fd, LAST_MARKER);
     config->row = cfg_row;
     config->col = cfg_col;
@@ -55,7 +55,7 @@ void osk_render(int fd, FBInkConfig * config, unsigned int osk_y, unsigned int w
 const kbkey * osk_press(unsigned int width, unsigned int height, unsigned int x, unsigned int y) {
     unsigned int blockw = width / OSK_W;
     unsigned int blockh = height / OSK_H;
-    for (unsigned int i = 0; i < OSK_NKEYS; i++) {
+    for (unsigned int i = 0u; i < OSK_NKEYS; i++) {
         unsigned int kx = static_cast<unsigned int>(osk_keys[i].x * static_cast<float>(blockw));
         unsigned int ky = static_cast<unsigned int>(osk_keys[i].y * static_cast<float>(blockh));
         unsigned int kw = osk_keys[i].rrect.width;

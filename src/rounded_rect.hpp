@@ -37,19 +37,19 @@ public:
         float mx = static_cast<float>(width) / 2.f;
         float my = static_cast<float>(height) / 2.f;
         // DRAW ROUNDED RECT
-        for (unsigned int y = 0; y < height; y++) {
-            for (unsigned int x = 0; x < width; x++) {
+        for (unsigned int y = 0u; y < height; y++) {
+            for (unsigned int x = 0u; x < width; x++) {
                 float dx = _clamp(_abs(mx - static_cast<float>(x)) - (static_cast<float>(width) - spacing)/2.f + radius);
                 float dy = _clamp(_abs(my - static_cast<float>(y)) - (static_cast<float>(height) - spacing)/2.f + radius);
                 bool inside = (dx*dx + dy*dy) < radius;
                 size_t idx = (y*width + x)*bpp;
-                // for uneven bpp, its either Y or RGB
+                // for uneven bpp, it's either Y or RGB
                 // for even bpp, the last component is alpha
-                for (uint8_t p = 0; p < bpp; p++) { // could subtract 1 from even bpp
+                for (uint8_t p = 0u; p < bpp; p++) { // could subtract 1 from even bpp
                     dst[idx+p] = inside ? color : 255u;
                 }
-                if ((bpp & 1u) == 0) {
-                    dst[idx+bpp-1] = alpha;
+                if ((bpp & 1u) == 0u) {
+                    dst[idx+bpp-1u] = alpha;
                 }
             }
         }
@@ -62,18 +62,18 @@ public:
         int x0 = (static_cast<int>(width) - ((glyphWidth+rspacing) * n)) / 2 + rspacing/2;
         int y0 = (static_cast<int>(height) - glyphHeight) / 2;
         if (x0 < 0 || y0 < 0) return; // just skip drawing if the osk is too small
-        for (size_t i = 0; i < n; i++) {
+        for (size_t i = 0u; i < n; i++) {
             unsigned char ch = text[i];
             // const unsigned char * bitmap = microknight_block1[ch];
             const unsigned char * bitmap = topaz_block1[ch];
-            for (uint8_t dx = 0; dx < glyphWidth; dx++) {
-                for (uint8_t dy = 0; dy < glyphHeight; dy++) {
-                    bool set = bitmap[dy] & (1 << dx);
+            for (uint8_t dx = 0u; dx < glyphWidth; dx++) {
+                for (uint8_t dy = 0u; dy < glyphHeight; dy++) {
+                    bool set = bitmap[dy] & (1u << dx);
                     unsigned int x = x0 + i*(glyphWidth+rspacing) + dx;
                     unsigned int y = y0 + dy;
                     size_t idx = (y*width + x)*bpp;
                     if (set) {
-                        for (uint8_t p = 0; p < bpp; p++) { // could subtract 1 from even bpp
+                        for (uint8_t p = 0u; p < bpp; p++) { // could subtract 1 from even bpp
                             dst[idx+p] = text_color;
                         }
                     }
