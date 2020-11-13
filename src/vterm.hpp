@@ -476,7 +476,7 @@ public:
     void setup(uint8_t fontmult=2, const char * fontname="terminus") {
         gettimeofday(&osk_last_kp, 0);
         cursor.width = 10u;
-        cursor.height = 10u;
+        cursor.height = 18u;
         cursor.spacing = 0.f;
         cursor.radius = 5.f;
         cursor.render();

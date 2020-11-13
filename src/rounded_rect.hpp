@@ -12,11 +12,11 @@
 #include "../FBInk/fonts/topaz.h"
 
 class RoundedRect {
-    static float _abs(float a) {
-        return a > 0.f ? a : -a;
+    static int _abs(int a) {
+        return a > 0 ? a : -a;
     }
-    static float _clamp(float a) {
-        return a > 0.f ? a : 0.f;
+    static int _clamp(int a) {
+        return a > 0 ? a : 0;
     }
 public:
     uint8_t * dst = nullptr;
@@ -32,46 +32,51 @@ public:
 
     void render() {
         size_t len = width * height * bpp;
+        printf("RoundedRect:render realloc dst (%p) to %zu bytes\n", dst, len);
         dst = (uint8_t*)realloc(dst, len);
         float mx = static_cast<float>(width) / 2.f;
         float my = static_cast<float>(height) / 2.f;
         // DRAW ROUNDED RECT
         for (unsigned int y = 0; y < height; y++) {
             for (unsigned int x = 0; x < width; x++) {
-                float dx = _clamp(_abs(mx - static_cast<float>(x)) - (static_cast<float>(width) - spacing)/2.f + radius);
-                float dy = _clamp(_abs(my - static_cast<float>(y)) - (static_cast<float>(height) - spacing)/2.f + radius);
+                float dx = _clamp(_abs(mx - x) - (width - spacing)/2.f + radius);
+                float dy = _clamp(_abs(my - y) - (height - spacing)/2.f + radius);
                 bool inside = dx*dx + dy*dy < radius;
                 size_t idx = (y*width + x)*bpp;
+                //printf("RECT: (%u, %u) -> idx: %zu\n", x, y, idx);
                 // for uneven bpp, its either Y or RGB
                 // for even bpp, the last component is alpha
-                for (unsigned int p = 0; p < bpp; p++) { // could subtract 1 from even bpp
+                for (uint8_t p = 0; p < bpp; p++) { // could subtract 1 from even bpp
                     dst[idx+p] = inside ? color : 255u;
                 }
-                if ((bpp & 1) == 0) {
+                if ((bpp & 1u) == 0) {
                     dst[idx+bpp-1] = alpha;
                 }
             }
         }
         // DRAW LABEL
-        uint8_t glyphWidth = 8;
-        uint8_t rspacing = 2;
-        uint8_t glyphHeight = 16;
+        uint8_t glyphWidth = 8u;
+        uint8_t rspacing = 2u;
+        uint8_t glyphHeight = 16u;
+        if (width < glyphWidth || height < glyphHeight) return; // rect can't be smaller than the label
         size_t n = strlen(text);
-        int x0 = (width - ((glyphWidth+rspacing) * n)) / 2u + rspacing/2u;
-        int y0 = (height - glyphHeight) / 2u;
+        int x0 = (width - ((glyphWidth+rspacing) * n)) / 2 + rspacing/2;
+        int y0 = (height - glyphHeight) / 2;
+        printf("x0: %d, y0: %d\n", x0, y0);
         if (x0 < 0 || y0 < 0) return; // just skip drawing if the osk is too small
         for (size_t i = 0; i < n; i++) {
             unsigned char ch = text[i];
             // const unsigned char * bitmap = microknight_block1[ch];
             const unsigned char * bitmap = topaz_block1[ch];
-            for (unsigned int dx = 0; dx < glyphWidth; dx++) {
-                for (unsigned int dy = 0; dy < glyphHeight; dy++) {
+            for (uint8_t dx = 0; dx < glyphWidth; dx++) {
+                for (uint8_t dy = 0; dy < glyphHeight; dy++) {
                     bool set = bitmap[dy] & (1 << dx);
                     unsigned int x = x0 + i*(glyphWidth+rspacing) + dx;
                     unsigned int y = y0 + dy;
                     size_t idx = (y*width + x)*bpp;
+                    //printf("LABEL: (%u, %u) -> idx: %zu\n", x, y, idx);
                     if (set) {
-                        for (unsigned int p = 0; p < bpp; p++) { // could subtract 1 from even bpp
+                        for (uint8_t p = 0; p < bpp; p++) { // could subtract 1 from even bpp
                             dst[idx+p] = text_color;
                         }
                     }
