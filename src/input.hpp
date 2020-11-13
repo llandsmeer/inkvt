@@ -266,7 +266,7 @@ public:
 
         // Abort if we can't tell the platform from the env.
         // NOTE: We could also compute that from FBInk's state via device_platform, although that's not a 1:1 mapping...
-        if (platform == NULL) {
+        if (platform == nullptr) {
             puts("add_serial() is only supported on Kobo devices with a proper PLATFORM set in the env!");
             return false;
         }
@@ -303,7 +303,7 @@ public:
 
         // Sleep a bit to leave the kernel time to breathe, because everything is terrible
         const struct timespec zzz   = { 0L, 500000000L };
-        nanosleep(&zzz, NULL);
+        nanosleep(&zzz, nullptr);
 
         int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
         if (fd != -1) {

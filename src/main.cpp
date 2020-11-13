@@ -65,10 +65,10 @@ void print_listen_adresses(Buffers & buffers) {
         deque_printf(buffers.vt100_in, "    ... could not call getifaddres()\r\n");
         return;
     }
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (!ifa->ifa_addr)
             continue;
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
         if (s == 0 && ifa->ifa_addr->sa_family == AF_INET) {
             deque_printf(buffers.vt100_in, "  - %s:%d (%s)\r\n",
                     host, inputs.server.port, ifa->ifa_name);
