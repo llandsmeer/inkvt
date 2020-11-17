@@ -65,10 +65,10 @@ void print_listen_adresses(Buffers & buffers) {
         deque_printf(buffers.vt100_in, "    ... could not call getifaddres()\r\n");
         return;
     }
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
         if (!ifa->ifa_addr)
             continue;
-        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+        s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
         if (s == 0 && ifa->ifa_addr->sa_family == AF_INET) {
             deque_printf(buffers.vt100_in, "  - %s:%d (%s)\r\n",
                     host, inputs.server.port, ifa->ifa_name);
@@ -89,7 +89,7 @@ int main(int argc, char ** argv) {
         ("osk", "Experimental OSK", cxxopts::value<bool>()->default_value("false"))
         ("f,fontname", "FBInk Bitmap fontname, one of ibm, unscii, unscii_alt, unscii_thin, unscii_fantasy, unscii_mcr, unscii_tall, block, leggie, veggie, kates, fkp, ctrld, orp, orpb, orpi, scientifica, scientificab, scientificai, terminus, terminusb, fatty, spleen, tewi, tewib, topaz, microknight, vga or cozette",
             cxxopts::value<std::string>()->default_value("terminus"))
-        ("s,fontsize", "Fontsize multiplier", cxxopts::value<int>()->default_value("2"))
+        ("s,fontsize", "Fontsize multiplier", cxxopts::value<uint8_t>()->default_value("2"))
         ("d,debug", "Enable debug", cxxopts::value<bool>()->default_value("false"))
         ("c,shell", "Shell (full path)", cxxopts::value<std::string>()->default_value("/bin/sh"))
         ("i,input", "Initial stdin line (eg, call init script)", cxxopts::value<std::string>()->default_value(""))
@@ -112,7 +112,7 @@ int main(int argc, char ** argv) {
         inputs.add_evdev();
     }
     bool debug = arg_result["debug"].as<bool>();
-    vterm.setup(arg_result["fontsize"].as<int>(), fontname.c_str());
+    vterm.setup(arg_result["fontsize"].as<uint8_t>(), fontname.c_str());
     bool reinit_on_damage = false;
     if (!arg_result["no-reinit"].as<bool>()) {
         reinit_on_damage = true;
@@ -146,7 +146,8 @@ int main(int argc, char ** argv) {
     }
     if (debug) {
         deque_printf(buffers.vt100_in,
-        "view %d %d dev '%s' '%s' '%s' %d offset %d %d %d rota %d %d %d %d %d\r\n",
+        "FBInk %s\r\nview %ux%u dev %s/%s/%s/%hu offset %hhu/%hhu/%hhu rota %hhu/%hhu/%d/%hhu/%d\r\n",
+            fbink_version(),
             vterm.state.view_width,
             vterm.state.view_height,
             vterm.state.device_name,
@@ -175,8 +176,8 @@ int main(int argc, char ** argv) {
                 inputs.istate.xev = 0;
                 inputs.istate.yev = 0;
                 inputs.istate.moved = 0;
-                int x = inputs.istate.x;
-                int y = inputs.istate.y;
+                int x;
+                int y;
 #ifdef TARGET_KOBO
                 // On Kobo, the touch panel has a fixed rotation, one that *never* matches the actual rotation.
                 // Handle the initial translation here so that it makes sense @ (canonical) UR...
@@ -184,8 +185,8 @@ int main(int argc, char ** argv) {
                 // c.f., rotate_touch_coordinates in FBInk for a different, possibly less compatible approach...
 
                 // Speaking of, handle said layout shenanigans now...
-                int dim_swap = 0;
-                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 0x01u) == 0) {
+                int dim_swap;
+                if ((fbink_rota_native_to_canonical(vterm.state.current_rota) & 1u) == 0u) {
                     // Canonical rotation is even (UR/UD)
                     dim_swap = vterm.state.screen_width;
                 } else {
@@ -195,12 +196,12 @@ int main(int argc, char ** argv) {
 
                 // And the various extra device-specific quirks on top of that...
                 // c.f., https://github.com/koreader/koreader/blob/master/frontend/device/kobo/device.lua
-                if (vterm.state.device_id == 310 || vterm.state.device_id == 320) {
+                if (vterm.state.device_id == 310u || vterm.state.device_id == 320u) {
                     // Touch A/B & Touch C. This will most likely be wrong for one of those.
                     // touch_mirrored_x
                     x = dim_swap - inputs.istate.x;
                     y = inputs.istate.y;
-                } else if (vterm.state.device_id == 374) {
+                } else if (vterm.state.device_id == 374u) {
                     // Aura H2O²r1
                     // touch_switch_xy
                     x = inputs.istate.y;
@@ -214,18 +215,20 @@ int main(int argc, char ** argv) {
                     printf("input touch @ (%d, %d) -> (%d, %d)\n", inputs.istate.x, inputs.istate.y, x, y);
                 }
 #else
+                x = inputs.istate.x;
+                y = inputs.istate.y;
                 if (debug) {
                     printf("input touch @ (%d, %d)\n", x, y);
                 }
 #endif
                 const char * kb = vterm.click(x, y, debug);
-                for (unsigned i = 0; i < strlen(kb); i++) {
+                for (size_t i = 0u; i < strlen(kb); i++) {
                     buffers.keyboard.push_back(kb[i]);
                 }
             }
         }
         while (buffers.serial.size() > 0) {
-            int c = buffers.serial.front();
+            char c = buffers.serial.front();
             buffers.serial.pop_front();
             buffers.keyboard.push_back(c);
         }
@@ -242,7 +245,7 @@ int main(int argc, char ** argv) {
         }
         while (buffers.keyboard.size() > 0) {
             inputs.had_input = 1;
-            int c = buffers.keyboard.front();
+            char c = buffers.keyboard.front();
             buffers.keyboard.pop_front();
             if (keytrans.is_ctrl()) {
                 c = c & 31;
@@ -250,7 +253,7 @@ int main(int argc, char ** argv) {
             pty.write(c);
         }
         while (buffers.vt100_in.size() > 0) {
-            int c = buffers.vt100_in.front();
+            char c = buffers.vt100_in.front();
             buffers.vt100_in.pop_front();
             vterm.write(c);
         }

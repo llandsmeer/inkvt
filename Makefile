@@ -13,7 +13,39 @@ endif
 
 CPPFLAGS += -Ilibvterm/include -DGITHASH=$(GITHASH)
 CFLAGS   += -Wall -falign-labels=8
-CXXFLAGS += -Wall -falign-labels=8 -fpermissive
+CXXFLAGS += -Wall -falign-labels=8
+
+# All the warnings! \o/
+EXTRA_WARNINGS+=-Wextra -Wunused
+EXTRA_WARNINGS+=-Wformat=2
+EXTRA_WARNINGS+=-Wformat-signedness
+# NOTE: -Wformat-truncation=2 is still a tad too aggressive w/ GCC 9, so, tone it down to avoid false-positives...
+EXTRA_WARNINGS+=-Wformat-truncation=1
+EXTRA_WARNINGS+=-Wnull-dereference
+EXTRA_WARNINGS+=-Wuninitialized
+ifeq (flto,$(findstring flto,$(CFLAGS)))
+	# Much like SQLite, libvterm also trips quite a few -Wnull-dereference warnings at link-time w/ LTO
+	EXTRA_WARNINGS+=-Wno-null-dereference
+	# And also a few -Wmaybe-uninitialized ones
+	EXTRA_WARNINGS+=-Wno-maybe-uninitialized
+endif
+EXTRA_WARNINGS+=-Wduplicated-branches -Wduplicated-cond
+EXTRA_WARNINGS+=-Wundef
+EXTRA_WARNINGS+=-Wwrite-strings
+EXTRA_WARNINGS+=-Wlogical-op
+EXTRA_WARNINGS+=-Wshadow
+#EXTRA_WARNINGS+=-Wmissing-declarations
+#EXTRA_WARNINGS+=-Winline
+EXTRA_WARNINGS+=-Wcast-qual
+# NOTE: GCC 8 introduces -Wcast-align=strict to warn regardless of the target architecture (i.e., like clang)
+EXTRA_WARNINGS+=-Wcast-align
+EXTRA_WARNINGS+=-Wconversion
+# Output padding info when debugging (NOTE: Clang is slightly more verbose)
+# As well as function attribute hints
+ifdef DEBUG
+	EXTRA_WARNINGS+=-Wpadded
+	EXTRA_WARNINGS+=-Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn -Wsuggest-attribute=format -Wmissing-format-attribute
+endif
 
 # Attempt to automatically drop -static-libstdc++ when using the Nickel TC...
 ifeq ($(shell PATH='$(PATH)' $(CROSS_TC)-gcc -dumpmachine 2>/dev/null), arm-nickel-linux-gnueabihf)
@@ -40,7 +72,7 @@ src/_kbsend.hpp: src/kbsend.html
 linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	python3 src/kblayout.py > src/_kblayout.hpp
-	g++ $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS)
+	g++ $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_WARNINGS) src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS)
 ifneq ("$(DEBUG)","true")
 	strip --strip-unneeded build/inkvt.host
 endif
@@ -48,7 +80,7 @@ endif
 kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	python3 src/kblayout.py > src/_kblayout.hpp
-	$(CROSS_TC)-g++ -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(STATIC_STL_FLAG)
+	$(CROSS_TC)-g++ -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_WARNINGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(STATIC_STL_FLAG)
 	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
 

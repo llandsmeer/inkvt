@@ -36,9 +36,9 @@ public:
             unsigned short ws_col;
             unsigned short ws_xpixel;   /* unused */
             unsigned short ws_ypixel;   /* unused */
-        } winsize = { 0 };
-        winsize.ws_row = rows;
-        winsize.ws_col = cols;
+        } winsize = {};
+        winsize.ws_row = static_cast<unsigned short>(rows);
+        winsize.ws_col = static_cast<unsigned short>(cols);
         ioctl(master, TIOCSWINSZ, &winsize);
     }
 

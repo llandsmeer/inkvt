@@ -26,7 +26,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <stdlib.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <net/if.h>
 
 #include <vector>
@@ -68,7 +68,7 @@ public:
         return ret;
     }
 
-    int setup(int port) {
+    int setup(uint16_t setup_port) {
         long err;
         int opt = 1;
         fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -87,7 +87,7 @@ public:
         }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = INADDR_ANY;
-        address.sin_port = htons(port);
+        address.sin_port = static_cast<in_port_t>(htons(setup_port));
         err = bind(fd, (struct sockaddr *)&address, sizeof(address));
         if (fd < 0) {
             perror("bind");
@@ -100,7 +100,7 @@ public:
         }
         int flags = server_try(fcntl(fd, F_GETFL, 0));
         fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-        this->port = port;
+        this->port = setup_port;
         return 0;
     }
 
@@ -117,11 +117,11 @@ public:
         int addrlen = sizeof(address);
         clientfd = ::accept(fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         if (clientfd == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) return;
+            if (errno == EAGAIN) return;
             perror("accept");
             exit(1);
         }
-        int nread = read(clientfd, buffer, sizeof(buffer)-1);
+        ssize_t nread = read(clientfd, buffer, sizeof(buffer)-1);
         if (nread <= 0) {
             close(clientfd);
             return;
@@ -145,7 +145,7 @@ public:
             char c1;
             char c2;
             while ((ss >> c1) && (ss >> c2)) {
-                output.push_back((hexdigit(c1)<<4) | hexdigit(c2));
+                output.push_back(static_cast<char>((hexdigit(c1)<<4) | hexdigit(c2)));
             }
             static char ok[] = "ok.\n";
             send(clientfd, response_headers , sizeof(response_headers)-1 , 0);

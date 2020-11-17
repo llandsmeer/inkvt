@@ -72,18 +72,18 @@ private:
     struct pollfd fds[128];
     int nfds = 0;
     bool should_reset_termios = 0;
-    struct termios termios_reset = { 0 };
+    struct termios termios_reset = {};
     VTermToFBInk * vterm = 0;
 
     void handle_evdev(Buffers & buffers, struct input_event ev) {
         int handled = 1;
         if (ev.type == EV_ABS) {
-            if ((ev.code == ABS_MT_POSITION_X || ev.code == ABS_X) && ev.value != 0) {
+            if (ev.code == ABS_MT_POSITION_X || ev.code == ABS_X) {
                 if (ev.value != istate.x) istate.moved += 1;
                 istate.x = ev.value;
                 istate.xev = 1;
                 handled = 1;
-            } else if ((ev.code == ABS_MT_POSITION_Y || ev.code == ABS_Y) && ev.value != 0) {
+            } else if (ev.code == ABS_MT_POSITION_Y || ev.code == ABS_Y) {
                 if (ev.value != istate.y) istate.moved += 1;
                 istate.y = ev.value;
                 istate.yev = 1;
@@ -105,8 +105,8 @@ private:
 
     void handle_evdev(Buffers & buffers, int fd) {
         struct input_event ev;
-        unsigned int size = read(fd, &ev, sizeof(struct input_event));
-        if (size < sizeof(struct input_event)) {
+        ssize_t size = read(fd, &ev, sizeof(struct input_event));
+        if (size < 0 || static_cast<size_t>(size) < sizeof(struct input_event)) {
             printf("error reading from fd %d\n", fd);
             return;
         }
@@ -116,11 +116,11 @@ private:
     void handle_serial(Buffers & buffers, int fd) {
         char buf[1];
         for (;;) {
-            int nread = read(fd, buf, sizeof(buf));
+            ssize_t nread = read(fd, buf, sizeof(buf));
             if (nread == -1 || nread == 0) { // errno = EAGAIN for blocking read
                 break;
             }
-            for (int n = 0; n < nread; n++) {
+            for (ssize_t n = 0; n < nread; n++) {
                 buffers.serial.push_back(buf[n]);
             }
         }
@@ -128,9 +128,9 @@ private:
 
     void handle_progout(Buffers & buffers, int fd) {
         char buf[64];
-        int nread = read(fd, buf, sizeof(buf));
+        ssize_t nread = read(fd, buf, sizeof(buf));
         if (nread < 0) return;
-        for (int i = 0; i < nread; i++) {
+        for (ssize_t i = 0; i < nread; i++) {
             buffers.vt100_in.push_back(buf[i]);
         }
         // NOTE: Don't read out everything available
@@ -144,7 +144,7 @@ private:
         server.accept(buffers.keyboard);
     }
 
-    void handle_vterm_timer(Buffers & buffers, int fd) {
+    void handle_vterm_timer(Buffers & buffers __attribute__((unused)), int fd) {
         uint64_t buf;
         if (read(fd, &buf, sizeof(buf)) > 0) {
             vterm->tick();
@@ -158,7 +158,7 @@ private:
         if (fdsi.ssi_signo == SIGINT) {
             buffers.keyboard.push_back(0x03);
         } else {
-            printf("Got signal %d, exiting now\n", fdsi.ssi_signo);
+            printf("Got signal %u, exiting now\n", fdsi.ssi_signo);
             exit(EXIT_SUCCESS);
         }
     }
@@ -170,7 +170,7 @@ private:
         }
     }
 
-    void handle_input_timeout(Buffers & buffers, int fd) {
+    void handle_input_timeout(Buffers & buffers __attribute__((unused)), int fd) {
         uint64_t buf;
         if (read(fd, &buf, sizeof(buf)) > 0 && !had_input) {
             printf("input timeout\n");
@@ -249,11 +249,11 @@ public:
         fds[nfds++].fd = fd;
     }
 
-    void add_vterm_timer(int fd, VTermToFBInk * vterm) {
+    void add_vterm_timer(int fd, VTermToFBInk * vt) {
         fdtype[nfds] = FD_VTERM_TIMER;
         fds[nfds].events = POLLIN;
         fds[nfds++].fd = fd;
-        this->vterm = vterm;
+        this->vterm = vt;
     }
 
     bool add_serial() {
@@ -266,7 +266,7 @@ public:
 
         // Abort if we can't tell the platform from the env.
         // NOTE: We could also compute that from FBInk's state via device_platform, although that's not a 1:1 mapping...
-        if (platform == NULL) {
+        if (platform == nullptr) {
             puts("add_serial() is only supported on Kobo devices with a proper PLATFORM set in the env!");
             return false;
         }
@@ -303,7 +303,7 @@ public:
 
         // Sleep a bit to leave the kernel time to breathe, because everything is terrible
         const struct timespec zzz   = { 0L, 500000000L };
-        nanosleep(&zzz, NULL);
+        nanosleep(&zzz, nullptr);
 
         int fd = open("/dev/ttyGS0", O_RDONLY | O_NONBLOCK | O_CLOEXEC);
         if (fd != -1) {
@@ -323,7 +323,7 @@ public:
         return false;
     }
 
-    int add_http(int port) {
+    int add_http(uint16_t port) {
         if (server.setup(port) < -1) {
             return -1;
         }

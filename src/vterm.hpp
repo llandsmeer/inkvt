@@ -34,6 +34,9 @@ constexpr int INTERVAL_MS = 100;
 // is ~ 300k output_char() calls per 100ms
 // on the kobo, random values between 4k and 14k
 #ifdef TARGET_KOBO
+// FIXME: Make it dynamic, and compute it based on maxcols x maxrows to make it a screenful?
+//        (e.g., currently, at default settings, on a Forma, that'd be 90x46 or 90x59 depending on whether the OSK is enabled).
+//        That'd render the double-disable workaround in tick superfluous.
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 3000;
 #else
 constexpr long HIGH_THROUGHPUT_THRESHOLD = 100000;
@@ -74,28 +77,28 @@ public:
     //ts.it_interval.tv_nsec = 100*1000000;
 
     int fbfd;
-    FBInkConfig config = { 0 };
-    FBInkState state = { 0 };
+    FBInkConfig config = {};
+    FBInkState state = {};
 
     // Used in the commented out term_moverect() implementation:
-    // FBInkDump dump = { 0 };
+    // FBInkDump dump = {};
 
     bool has_osk = false;
 
-    int osk_height() {
-        if (!has_osk) return 0;
-        int osk_height = 400;
-        if (osk_height > (int)state.view_height / 2) osk_height = state.view_height/2;
+    unsigned int osk_height() {
+        if (!has_osk) return 0u;
+        unsigned int osk_height = 400u;
+        if (osk_height > state.view_height / 2u) osk_height = state.view_height/2u;
         return osk_height;
     }
 
-    int nrows() {
-        int kb_height = osk_height();
-        int line_height = state.view_height / state.max_rows;
-        return (state.view_height - kb_height) / line_height - 1;
+    unsigned int nrows() {
+        unsigned int kb_height = osk_height();
+        unsigned int line_height = state.view_height / state.max_rows;
+        return (state.view_height - kb_height) / line_height - 1u;
     }
 
-    int ncols() {
+    unsigned int ncols() {
         return state.max_cols;
     }
 
@@ -112,8 +115,8 @@ public:
 
     void osk() {
         if (has_osk) {
-            int h = osk_height();
-            int osk_y = state.view_height - h;
+            unsigned int h = osk_height();
+            unsigned int osk_y = state.view_height - h;
             osk_setup(state.view_width, h);
             osk_render(fbfd, &config, osk_y, state.view_width, h);
         }
@@ -124,8 +127,8 @@ public:
         // See the initial matching bit of trickery in main,
         // and hope that FBInk's fbink_rota_native_to_canonical won't screw the pooch.
         // The whole thing *may* only make sense on Kobo...
-        int x = ix;
-        int y = iy;
+        int x;
+        int y;
         // c.f., GestureDetector:adjustGesCoordinate @ https://github.com/koreader/koreader/blob/master/frontend/device/gesturedetector.lua
 #ifdef TARGET_KOBO
         switch (fbink_rota_native_to_canonical(state.current_rota)) {
@@ -133,7 +136,8 @@ public:
         switch (state.current_rota) {
 #endif
             case FB_ROTATE_UR:
-                // NOP!
+                x = ix;
+                y = iy;
                 break;
             case FB_ROTATE_CW:
                 x = state.screen_width - iy;
@@ -146,6 +150,10 @@ public:
             case FB_ROTATE_CCW:
                 x = iy;
                 y = state.screen_height - ix;
+                break;
+            default:
+                x = -1;
+                y = -1;
                 break;
         }
         if (debug) {
@@ -163,8 +171,8 @@ public:
                     cursor.width,
                     cursor.height,
                     cursor.width * cursor.height * cursor.bpp,
-                    x - cursor.width / 2,
-                    y - cursor.height / 2,
+                    static_cast<short int>(x - cursor.width / 2u),
+                    static_cast<short int>(y - cursor.height / 2u),
                     &config
                     );
             config.row = cfg_row;
@@ -187,9 +195,9 @@ public:
         // handle kp
         // this might be some of the ugliest code I have ever written
         // the returned string is only correct up to the next call to this function
-        int h = osk_height();
-        int osk_y = state.view_height - h;
-        const kbkey * b = osk_press(state.view_width, osk_height(), x, y - osk_y);
+        unsigned int h = osk_height();
+        unsigned int osk_y = state.view_height - h;
+        const kbkey * b = osk_press(state.view_width, osk_height(), static_cast<unsigned int>(x), static_cast<unsigned int>(y - osk_y));
         if (!b) {
             printf("Touch event; but no key @ (%d, %d)\n", x, y);
             return "";
@@ -247,10 +255,13 @@ public:
     void tick() {
         if (high_throughput_mode && nwrites_in_interval < HIGH_THROUGHPUT_THRESHOLD) {
             high_throughput_mode = false;
-            VTermRect full_refresh = { 0, 0, 0, 0};
+            VTermRect full_refresh = { 0, 0, 0, 0 };
             full_refresh.end_col = ncols();
             full_refresh.end_row = nrows();
             term_damage(full_refresh, this);
+            // Make sure term_damage doesn't re-trip high throughput mode,
+            // in case HIGH_THROUGHPUT_THRESHOLD is lower than ncols() by nrows()
+            high_throughput_mode = false;
         }
         if (nwrites_in_interval == 0) {
             nticks_without_output += 1;
@@ -298,8 +309,8 @@ public:
 
     void update_fg_color(VTermColor * c) {
         vterm_screen_convert_color_to_rgb(screen, c);
-#define FG(x) ((255-x) / 2)
-#define BG(x) (255-x)
+#define FG(x) static_cast<uint8_t>((x^0xFFu) / 2u)
+#define BG(x) static_cast<uint8_t>(x^0xFFu)
         fbink_set_fg_pen_rgba(FG(c->rgb.red), FG(c->rgb.green), FG(c->rgb.blue), 0xFFu, false, true);
     }
 
@@ -317,6 +328,7 @@ public:
             if (high_throughput_mode) return;
             if (nwrites_in_interval > HIGH_THROUGHPUT_THRESHOLD) {
                 high_throughput_mode = true;
+                // fprintf(stdout, "Enabling high_throughput_mode (%ld > %ld)\n", nwrites_in_interval, HIGH_THROUGHPUT_THRESHOLD);
             }
         } else {
             run_timer();
@@ -324,8 +336,8 @@ public:
         // drawing stuff
         VTermScreenCell cell;
         vterm_screen_get_cell(screen, pos, &cell);
-        config.col = pos.col;
-        config.row = pos.row;
+        config.col = static_cast<short int>(pos.col);
+        config.row = static_cast<short int>(pos.row);
         if (pos.row == last_cursor.row && pos.col == last_cursor.col) {
             update_fg_color(&cell.bg);
             update_bg_color(&cell.fg);
@@ -373,14 +385,15 @@ public:
 
         // Refresh the full rectangle
         me->config.no_refresh = false;
-        me->config.col = rect.start_col;
-        me->config.row = rect.start_row;
-        fbink_grid_refresh(me->fbfd, rect.end_col - rect.start_col, rect.end_row - rect.start_row, &me->config);
+        me->config.col = static_cast<short int>(rect.start_col);
+        me->config.row = static_cast<short int>(rect.start_row);
+        fbink_grid_refresh(me->fbfd, static_cast<unsigned short int>(rect.end_col - rect.start_col), static_cast<unsigned short int>(rect.end_row - rect.start_row), &me->config);
 
         return 1;
     }
 
-    static int term_movecursor(VTermPos pos, VTermPos old, int visible, void * user) {
+    static int term_movecursor(VTermPos pos, VTermPos old, int visible __attribute__((unused)), void * user) {
+        // fprintf(stdout, "Called term_movecursor from (%d, %d) to (%d, %d)\n", old.col, old.row, pos.col, pos.row);
         VTermToFBInk * me = static_cast<VTermToFBInk*>(user);
         me->last_cursor = pos; // keep track of cursor in high_throughput_mode
         if (me->high_throughput_mode) return 1;
@@ -389,7 +402,8 @@ public:
         return 1;
     }
 
-    static int term_moverect(VTermRect dst, VTermRect src, void * user) {
+    static int term_moverect(VTermRect dst, VTermRect src __attribute__((unused)), void * user) {
+        // fprintf(stdout, "Called term_moverect from (%d, %d), (%d, %d) to (%d, %d), (%d, %d)\n", src.start_col, src.start_row, src.end_col, src.end_row, dst.start_col, dst.start_row, dst.end_col, dst.end_row);
         term_damage(dst, user);
         return 1;
         /*
@@ -411,11 +425,11 @@ public:
         */
     }
 
-    static int term_settermprop(VTermProp prop, VTermValue * val, void * user) {
+    static int term_settermprop(VTermProp prop __attribute__((unused)), VTermValue * val __attribute__((unused)), void * user __attribute__((unused))) {
         return 1;
     }
 
-    static int term_bell(void* user) {
+    static int term_bell(void* user __attribute__((unused))) {
         return 0;
     }
 
@@ -459,12 +473,12 @@ public:
         return FONT_INDEX_E::TERMINUS;
     }
 
-    void setup(int fontmult=2, const char * fontname="terminus") {
+    void setup(uint8_t fontmult=2u, const char * fontname="terminus") {
         gettimeofday(&osk_last_kp, 0);
-        cursor.width = 10;
-        cursor.height = 10;
-        cursor.spacing = 0;
-        cursor.radius = 5;
+        cursor.width = 10u;
+        cursor.height = 18u;
+        cursor.spacing = 0.f;
+        cursor.radius = 5.f;
         cursor.render();
         fbfd = fbink_open();
         if (fbfd == -1) {
@@ -479,6 +493,17 @@ public:
         config.is_quiet = true;
         config.is_verbose = false;
         fbink_update_verbosity(&config);
+
+        // None of the dithering mechanisms deal very well with tiny refresh regions, so,
+        // this doesn't really work all that well... :/
+        /*
+        config.wfm_mode = WFM_MODE_INDEX_E::WFM_DU;
+        if (strcmp(state.device_platform, "Mark 7") >= 0) {
+            config.dithering_mode = HW_DITHER_INDEX_E::HWD_ORDERED;
+        } else {
+            config.dithering_mode = HW_DITHER_INDEX_E::HWD_LEGACY;
+        }
+        */
 
         vtsc = (VTermScreenCallbacks){
             .damage = VTermToFBInk::term_damage,
