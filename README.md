@@ -24,6 +24,7 @@ This has been tested with the "kobo" one.
 You can also use the "nickel" one if you really want a crappier GCC version,
 whose only saving grace will be the ability to link against the STL dynamically.
 The Makefile will honor the `CROSS_TC` variable, which is setup by the env script as documented in koxtoolchain.
+Pass DEBUG=1 (eg. `make clean; make DEBUG=1 kobo`) to create a debug build.
 
 ```
 $ sudo apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
