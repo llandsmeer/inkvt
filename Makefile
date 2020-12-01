@@ -3,9 +3,9 @@ GITHASH='"'$(shell git rev-parse --short HEAD)'"'
 CROSS_TC?=/home/llandsmeer/Build/gcc-linaro-7.5.0-2019.12-i686_arm-linux-gnueabihf/bin/arm-linux-gnueabihf
 # CROSS_TC?=arm-linux-gnueabihf
 
-ifeq ("$(DEBUG)","true")
-	CFLAGS   += -g -pg
-	CXXFLAGS += -g -pg
+ifdef DEBUG
+	CFLAGS   += -g -fno-omit-frame-pointer -pg
+	CXXFLAGS += -g -fno-omit-frame-pointer -pg
 else
 	CFLAGS   ?= -O2
 	CXXFLAGS ?= -O2
@@ -73,7 +73,7 @@ linux: build/libfbink.a build/libvterm.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	python3 src/kblayout.py > src/_kblayout.hpp
 	g++ $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_WARNINGS) src/main.cpp -lvterm -lfbink -o build/inkvt.host $(LDFLAGS)
-ifneq ("$(DEBUG)","true")
+ifndef DEBUG
 	strip --strip-unneeded build/inkvt.host
 endif
 
@@ -81,8 +81,10 @@ kobo: build/fbdepth build/libfbink_kobo.a build/libvterm_kobo.a src/_kbsend.hpp
 	python3 keymap.py > src/_keymap.hpp
 	python3 src/kblayout.py > src/_kblayout.hpp
 	$(CROSS_TC)-g++ -DTARGET_KOBO $(CPPFLAGS) $(CXXFLAGS) $(EXTRA_WARNINGS) src/main.cpp -lvterm_kobo -lfbink_kobo -o build/inkvt.armhf $(LDFLAGS) $(STATIC_STL_FLAG)
+ifndef DEBUG
 	$(CROSS_TC)-strip --strip-unneeded build/inkvt.armhf
 	upx build/inkvt.armhf || echo "install UPX for smaller executables"
+endif
 
 release: clean kobo
 	mkdir -p Kobo/.adds/inkvt Kobo/.adds/kfmon/config
@@ -106,19 +108,31 @@ build/libfbink.a:
 	mkdir -p build
 	make -C FBInk clean || (echo "TRY git submodule update --init --recursive"  && false)
 	env -u CROSS_TC -u CPPFLAGS -u CFLAGS -u CXXFLAGS -u LDFLAGS -u AR -u RANLIB make -C FBInk LINUX=true MINIMAL=true FONTS=true IMAGE=true staticlib
+ifdef DEBUG
+	cp FBInk/Debug/libfbink.a build/libfbink.a
+else
 	cp FBInk/Release/libfbink.a build/libfbink.a
+endif
 
 build/libfbink_kobo.a:
 	mkdir -p build
 	make -C FBInk clean
 	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true MINIMAL=true FONTS=true IMAGE=true staticlib
+ifdef DEBUG
+	cp FBInk/Debug/libfbink.a build/libfbink_kobo.a
+else
 	cp FBInk/Release/libfbink.a build/libfbink_kobo.a
+endif
 
 build/fbdepth:
 	mkdir -p build
 	make -C FBInk clean
 	make -C FBInk CROSS_TC=$(CROSS_TC) KOBO=true utils
+ifdef DEBUG
+	cp FBInk/Debug/fbdepth build/fbdepth
+else
 	cp FBInk/Release/fbdepth build/fbdepth
+endif
 
 clean:
 	make -C FBInk clean  || (echo "TRY git submodule update --init --recursive"  && false)
