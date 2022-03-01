@@ -1,3 +1,5 @@
+*Warning!! I have stopped actively developing this project, sold off my kobo and switched to the pinenote. I'll happily merge Pull Requests and provide feedback, but I don't have access to a kobo device currently to test bugs and new code. If someone wants to lead development in this project I can add a link to your fork here*
+
 Experimental VT100 terminal emulator for the Kobo Libra H2O (and probably all targets supported by FBInk)
 
 <img src=it_works.jpeg width=800/>
